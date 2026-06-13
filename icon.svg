@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+  <!-- Background -->
+  <rect width="180" height="180" fill="#1a1a1a"/>
+  <!-- Chrome outer ring -->
+  <circle cx="90" cy="90" r="82" fill="#9c9a92"/>
+  <!-- 12 knurling tick marks -->
+  <line x1="90" y1="8"  x2="90" y2="28" stroke="#3a3a3a" stroke-width="6" stroke-linecap="round" transform="rotate(0,90,90)"/>
+  <line x1="90" y1="8"  x2="90" y2="28" stroke="#3a3a3a" stroke-width="6" stroke-linecap="round" transform="rotate(30,90,90)"/>
+  <line x1="90" y1="8"  x2="90" y2="28" stroke="#3a3a3a" stroke-width="6" stroke-linecap="round" transform="rotate(60,90,90)"/>
+  <line x1="90" y1="8"  x2="90" y2="28" stroke="#3a3a3a" stroke-width="6" stroke-linecap="round" transform="rotate(90,90,90)"/>
+  <line x1="90" y1="8"  x2="90" y2="28" stroke="#3a3a3a" stroke-width="6" stroke-linecap="round" transform="rotate(120,90,90)"/>
+  <line x1="90" y1="8"  x2="90" y2="28" stroke="#3a3a3a" stroke-width="6" stroke-linecap="round" transform="rotate(150,90,90)"/>
+  <line x1="90" y1="8"  x2="90" y2="28" stroke="#3a3a3a" stroke-width="6" stroke-linecap="round" transform="rotate(180,90,90)"/>
+  <line x1="90" y1="8"  x2="90" y2="28" stroke="#3a3a3a" stroke-width="6" stroke-linecap="round" transform="rotate(210,90,90)"/>
+  <line x1="90" y1="8"  x2="90" y2="28" stroke="#3a3a3a" stroke-width="6" stroke-linecap="round" transform="rotate(240,90,90)"/>
+  <line x1="90" y1="8"  x2="90" y2="28" stroke="#3a3a3a" stroke-width="6" stroke-linecap="round" transform="rotate(270,90,90)"/>
+  <line x1="90" y1="8"  x2="90" y2="28" stroke="#3a3a3a" stroke-width="6" stroke-linecap="round" transform="rotate(300,90,90)"/>
+  <line x1="90" y1="8"  x2="90" y2="28" stroke="#3a3a3a" stroke-width="6" stroke-linecap="round" transform="rotate(330,90,90)"/>
+  <!-- Dark knob face -->
+  <circle cx="90" cy="90" r="62" fill="#252525" stroke="#404040" stroke-width="2"/>
+  <!-- Inner highlight ring -->
+  <circle cx="90" cy="90" r="58" fill="none" stroke="#333" stroke-width="1"/>
+  <!-- Gold pointer line -->
+  <line x1="90" y1="32" x2="90" y2="62" stroke="#c9a227" stroke-width="9" stroke-linecap="round"/>
+  <!-- Center pivot -->
+  <circle cx="90" cy="90" r="10" fill="#555" stroke="#666" stroke-width="1"/>
+  <circle cx="90" cy="90" r="4"  fill="#3a3a3a"/>
+</svg>
