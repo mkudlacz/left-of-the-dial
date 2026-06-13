@@ -16,16 +16,18 @@ Live at **[tuner.redcontroldeck.com](https://tuner.redcontroldeck.com)**
 
 ## Features
 
-- **~86 verified stations** — college, public, NPR, freeform, jazz, classical, community
+- **101 verified stations** — college, public, NPR, freeform, jazz, classical, community
 - **Browse by format** — College, Public/NPR, Freeform, Community, Jazz, Classical, Indie/Alt, News
-- **Browse by metro** — New York, Boston, Chicago, Bay Area, LA, Seattle/PDX, Southeast, Midwest, Southwest, Mountain West
-- **Live search** — by call sign, city, state, org name, or genre (fires on keystroke)
+- **Browse by metro** — New York, Boston, Chicago, Bay Area, LA, Seattle/PDX, Southeast, Midwest, Southwest, Mountain
+- **Live search** — by call sign, city, state, org, genre, tags, and **now-playing metadata** (type "coltrane" or "afrobeat" to surface stations currently playing that)
+- **Now-playing metadata** — artist/song shown while streaming, fetched from station APIs (KEXP, KCRW) or auto-derived Icecast status for any self-hosted station; polled every 60s
 - **Tuning animation** — analog needle sweep while connecting
 - **VU meter** — animated bars while streaming
 - **Favorites** — star any station; saved to localStorage
-- **Shareable favorites** — tap ⤴ Share to copy a URL encoding your saved stations; anyone opening it gets those stations imported
-- **Now-playing bar** — live status, direct link to station site
-- **PWA** — installable on iPhone via Safari → Share → Add to Home Screen
+- **Shareable favorites** — ⤴ Share copies a URL like `tuner.redcontroldeck.com/#favs=wkcr,wfmu`; anyone opening it gets those stations imported
+- **Favorites importer** — paste a share URL into the Saved tab to migrate favorites across devices
+- **Now-playing bar** — live status, metadata, direct link to station site
+- **PWA** — installable on iPhone via Safari → Share → Add to Home Screen; home screen icon is a vintage radio dial photo
 
 ---
 
@@ -33,8 +35,10 @@ Live at **[tuner.redcontroldeck.com](https://tuner.redcontroldeck.com)**
 
 ```
 left-of-the-dial/
-├── index.html      # The entire app — open this in a browser
+├── index.html      # The entire app
 ├── manifest.json   # PWA manifest
+├── icon.jpg        # Home screen icon (vintage radio dial photo, 300×300)
+├── icon.svg        # Browser tab favicon (drawn tuning dial)
 └── README.md
 ```
 
@@ -44,51 +48,46 @@ left-of-the-dial/
 
 ```bash
 open index.html
-# or
-open -a "Google Chrome" index.html
 ```
 
-No server required.
+No server required. Works as a local file in Chrome, Firefox, or Safari.
 
 ---
 
 ## Station Database
 
-Stations are defined in a JavaScript array at the top of `index.html`. Each entry:
+Stations live in the `DB` array in `index.html`:
 
 ```js
-{ id:    'wkcr',
-  name:  'WKCR 89.9',
-  freq:  '89.9 FM',
-  city:  'New York',
-  state: 'NY',
-  org:   'Columbia University',
-  genre: 'Jazz · Classical · Freeform',
-  tags:  ['college', 'jazz', 'new york', 'tri-state'],
-  url:   'http://wkcr.streamguys1.com/live',
-  site:  'wkcr.org' }
+{ id:'wkcr', name:'WKCR 89.9', freq:'89.9 FM', city:'New York', state:'NY',
+  org:'Columbia University', genre:'Jazz · Classical · Freeform',
+  tags:['college','jazz','new york','tri-state'],
+  url:'http://wkcr.streamguys1.com/live', site:'wkcr.org' }
 ```
 
-### Verified stream URLs
+### URL Verification
 
-All URLs were tested with `curl -r 0-50` in June 2026. ~86 are confirmed live; ~54 are commented out pending working URLs.
+```bash
+curl -sL --max-time 7 -H "User-Agent: Mozilla/5.0" -r 0-50 "$url" | wc -c
+# >10 bytes = stream is live. Use -L to follow CDN redirects.
+```
 
-To find a correct URL for a broken station, the Radio Browser API is reliable:
+Finding a correct URL for a broken station — Radio Browser API is most reliable:
 
 ```bash
 curl -s -H "User-Agent: LeftOfTheDial/1.0" \
-  "https://de1.api.radio-browser.info/json/stations/search?name=WKCR&countrycode=US&limit=3" \
+  "https://de1.api.radio-browser.info/json/stations/search?name=WKNC&countrycode=US&limit=3" \
   | python3 -c "import sys,json; [print(s['name'],'|',s['url_resolved']) for s in json.load(sys.stdin)]"
 ```
 
-The `User-Agent` header is required — the API returns empty without it.
+**The `User-Agent` header is required** — the API returns empty without it.
 
-### Adding a Station
+### Status (June 2026)
 
-1. Find a direct stream URL (MP3 or AAC — not `.m3u`, `.m3u8`, or `.pls`)
-2. Verify it: `curl -s --max-time 5 -r 0-50 "URL" | wc -c` — should be > 10
-3. Add an entry to the `DB` array in `index.html`
-4. Add relevant tags
+- **101 active** — verified working
+- **39 hidden** — commented out with `/* ... */`, pending working URLs
+
+Hidden stations (39): WBRS, WMHC, WMUA, WZLY, WMHB, WHUS, WSOU, WVBR, WKRB, WBNY, WHCL, WRCU, WALF, WMUC, WVUD, WQHS, WVUM, WKNC, WVVS, WRFL, WNUR, WHPK, KMNR, KWUR, KURE, KRLX, KSDB, KBGA, KVRX, KTRU, KASC, KRUX, KUCR, KKJZ, LAist 89.3, KBVR, KMHD, KVCU, WMSE
 
 ### Tags Reference
 
@@ -115,6 +114,19 @@ The `User-Agent` header is required — the API returns empty without it.
 
 ---
 
+## Now-Playing Metadata
+
+Metadata is fetched while a station is streaming and shown in the now-playing bar. Sources (tried in order):
+
+1. **Station-specific API** — KEXP (`api.kexp.org/v2/plays`), KCRW (`tracklist-api.kcrw.com/Simulcast`)
+2. **Icecast status** — auto-derived as `<stream-origin>/status-json.xsl` for any self-hosted Icecast station
+
+If CORS blocks the request or no metadata is available, nothing is shown. Polled every 60 seconds.
+
+Metadata is cached per station in the session and included in search — searching "afrobeat" or "coltrane" will surface stations whose recent now-playing text matches.
+
+---
+
 ## Shareable Favorites
 
 The ⤴ Share button copies a URL like:
@@ -123,20 +135,42 @@ The ⤴ Share button copies a URL like:
 https://tuner.redcontroldeck.com/#favs=wkcr,wfmu,kalx
 ```
 
-Anyone opening that URL gets those stations merged into their saved list. No backend required.
+Opening that URL merges those stations into the recipient's saved list. The importer in the Saved tab accepts the full URL, bare hash (`#favs=...`), or a plain comma list.
 
 ---
 
 ## Deployment
 
-GitHub repo → Cloudflare Pages (no build command, output dir `/`) → `tuner.redcontroldeck.com` custom domain. Push to `main` and Cloudflare deploys automatically within ~60 seconds.
+GitHub `main` → Cloudflare Pages → `tuner.redcontroldeck.com`. Push to `main` and Cloudflare deploys in ~60 seconds. No build command, output dir `/`.
 
 ---
 
-## Roadmap
+## Backlog
 
-- [ ] Restore ~54 hidden stations once correct stream URLs are found
-- [ ] Live "now playing" metadata from station APIs (WFMU, WKCR, KEXP all have them)
-- [ ] Schedule / program guide panel per station
-- [ ] Keyboard shortcuts (space = play/pause)
-- [ ] Station notes / history / notable shows
+### Station coverage
+- [ ] Restore 39 hidden stations — find working stream URLs
+- [ ] Periodic re-verification of active URLs (CDNs rotate)
+- [ ] Fix WNUR — only known URL is `.m3u` playlist, need actual Icecast endpoint
+
+### Metadata enrichment
+- [ ] Expand `META_API` to WFMU, WWOZ, WNYC/WQXR, WBUR, WBEZ (APIs exist, need correct endpoints + CORS check)
+- [ ] Show name / program guide alongside song metadata where available
+- [ ] Per-station program schedule panel
+
+### Discovery
+- [ ] Station notes — history, format, notable shows (e.g. WKCR's Festival Jazz each January)
+- [ ] "Similar stations" suggestions based on shared tags
+- [ ] Radio Browser API integration for discovering stations beyond the curated DB
+
+### Navigation
+- [ ] Keyboard shortcuts: Space = play/pause, F = favorite, Esc = stop
+- [ ] Last-played station resumes on next open (save `currentId` to localStorage)
+- [ ] Deep-link to a station: `tuner.redcontroldeck.com/#station=wkcr`
+- [ ] Recently played history
+
+### Sharing
+- [ ] Share currently playing station (link that opens the app tuned to that station)
+
+### Technical
+- [ ] Service worker / offline shell
+- [ ] HLS support via lightweight lib (unlocks ~8 hidden stations with m3u8-only streams)
