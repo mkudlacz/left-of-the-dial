@@ -1,59 +1,63 @@
-# Freeform — Terrestrial Radio Streamer
+# Left of the Dial
 
-A single-file web app for discovering and streaming college, public, and community radio stations across the United States. No build step, no dependencies, no accounts — open `freeform.html` in any browser and tune in.
+A single-file web app for discovering and streaming college, public, and community radio stations across the United States. No build step, no dependencies, no accounts — open `index.html` in any browser and tune in.
+
+Named after the Replacements song.
 
 ---
 
 ## What It Is
 
-Built for the moment when someone says "WKCR is doing a Sonny Rollins tribute" and you want to tune in immediately. Modeled after the [No Tape Left Behind archive player](https://player.redcontroldeck.com) — dark, fast, stays out of the way.
+Built for the moment when someone says "WKCR is doing a Sonny Rollins tribute" and you want to tune in immediately. Styled after vintage 70s/80s stereo equipment — walnut cabinet, brushed aluminum faceplate, one red power LED.
+
+Live at **[tuner.redcontroldeck.com](https://tuner.redcontroldeck.com)**
 
 ---
 
 ## Features
 
-- **~160 stations** covering all regions of the US — college, public, NPR affiliates, community, and freeform
-- **Browse by filter** — College, Public/NPR, Freeform, Community, Jazz, Classical, Indie/Alt, News
+- **~86 verified stations** — college, public, NPR, freeform, jazz, classical, community
+- **Browse by format** — College, Public/NPR, Freeform, Community, Jazz, Classical, Indie/Alt, News
 - **Browse by metro** — New York, Boston, Chicago, Bay Area, LA, Seattle/PDX, Southeast, Midwest, Southwest, Mountain West
-- **Live search** — by call sign, city, state, org name, or genre
+- **Live search** — by call sign, city, state, org name, or genre (fires on keystroke)
 - **Tuning animation** — analog needle sweep while connecting
-- **VU meter** — animated bars while streaming live
+- **VU meter** — animated bars while streaming
 - **Favorites** — star any station; saved to localStorage
-- **Now-playing bar** — volume control, live status, direct link to station site
+- **Shareable favorites** — tap ⤴ Share to copy a URL encoding your saved stations; anyone opening it gets those stations imported
+- **Now-playing bar** — live status, direct link to station site
+- **PWA** — installable on iPhone via Safari → Share → Add to Home Screen
 
 ---
 
 ## Files
 
 ```
-Terrestial Radio Streamer/
-├── freeform.html       # The entire app — open this in a browser
-└── README.md           # This file
+left-of-the-dial/
+├── index.html      # The entire app — open this in a browser
+├── manifest.json   # PWA manifest
+└── README.md
 ```
 
 ---
 
-## Running It
+## Running Locally
 
 ```bash
-open freeform.html
+open index.html
 # or
-open -a "Google Chrome" freeform.html
+open -a "Google Chrome" index.html
 ```
 
-No server required. Works as a local file in Chrome, Firefox, or Safari.
-
-To install as a home screen app on iPhone: open in Safari → Share → Add to Home Screen.
+No server required.
 
 ---
 
 ## Station Database
 
-Stations are defined in a JavaScript array at the top of `freeform.html`. Each entry:
+Stations are defined in a JavaScript array at the top of `index.html`. Each entry:
 
 ```js
-{
-  id:    'wkcr',
+{ id:    'wkcr',
   name:  'WKCR 89.9',
   freq:  '89.9 FM',
   city:  'New York',
@@ -61,21 +65,35 @@ Stations are defined in a JavaScript array at the top of `freeform.html`. Each e
   org:   'Columbia University',
   genre: 'Jazz · Classical · Freeform',
   tags:  ['college', 'jazz', 'new york', 'tri-state'],
-  url:   'https://live.wkcr.org/wkcr.mp3',   // direct stream URL
-  site:  'wkcr.org'
-}
+  url:   'http://wkcr.streamguys1.com/live',
+  site:  'wkcr.org' }
 ```
+
+### Verified stream URLs
+
+All URLs were tested with `curl -r 0-50` in June 2026. ~86 are confirmed live; ~54 are commented out pending working URLs.
+
+To find a correct URL for a broken station, the Radio Browser API is reliable:
+
+```bash
+curl -s -H "User-Agent: LeftOfTheDial/1.0" \
+  "https://de1.api.radio-browser.info/json/stations/search?name=WKCR&countrycode=US&limit=3" \
+  | python3 -c "import sys,json; [print(s['name'],'|',s['url_resolved']) for s in json.load(sys.stdin)]"
+```
+
+The `User-Agent` header is required — the API returns empty without it.
 
 ### Adding a Station
 
-1. Find the station's direct stream URL (usually on their website under "Listen Live" or "Stream")
-2. Add an entry to the `DB` array in `freeform.html`
-3. Add relevant tags — these drive the filter chips
+1. Find a direct stream URL (MP3 or AAC — not `.m3u`, `.m3u8`, or `.pls`)
+2. Verify it: `curl -s --max-time 5 -r 0-50 "URL" | wc -c` — should be > 10
+3. Add an entry to the `DB` array in `index.html`
+4. Add relevant tags
 
 ### Tags Reference
 
 | Tag | Filter chip |
-|-----|------------|
+|---|---|
 | `college` | College |
 | `public`, `npr` | Public/NPR |
 | `freeform` | Freeform |
@@ -97,35 +115,28 @@ Stations are defined in a JavaScript array at the top of `freeform.html`. Each e
 
 ---
 
-## Stream URL Notes
+## Shareable Favorites
 
-Stream URLs occasionally rotate — radio stations update their infrastructure. If a station won't connect:
+The ⤴ Share button copies a URL like:
 
-1. Visit the station's site directly (linked in the now-playing bar)
-2. Find their "Listen Live" page
-3. Right-click the player → Inspect → Network tab → look for `.mp3`, `.aac`, or `.ogg` requests
-4. Update the `url` field in the `DB` entry
-
-Most college stations use Icecast and follow the pattern:
 ```
-https://[station-domain]:8000/[callsign].mp3
+https://tuner.redcontroldeck.com/#favs=wkcr,wfmu,kalx
 ```
+
+Anyone opening that URL gets those stations merged into their saved list. No backend required.
 
 ---
 
-## Roadmap / Ideas
+## Deployment
 
-- [ ] Pull live "now playing" metadata from station APIs (WFMU, WKCR, KEXP all have them)
+GitHub repo → Cloudflare Pages (no build command, output dir `/`) → `tuner.redcontroldeck.com` custom domain. Push to `main` and Cloudflare deploys automatically within ~60 seconds.
+
+---
+
+## Roadmap
+
+- [ ] Restore ~54 hidden stations once correct stream URLs are found
+- [ ] Live "now playing" metadata from station APIs (WFMU, WKCR, KEXP all have them)
 - [ ] Schedule / program guide panel per station
-- [ ] Radio Browser API integration as a fallback for undiscovered stations
-- [ ] PWA manifest for installable home screen app
-- [ ] Station notes / descriptions (history, format, notable shows)
-- [ ] "Similar stations" suggestions
-- [ ] Keyboard shortcuts (space = play/pause, arrow keys = prev/next favorite)
-- [ ] Export / share a station link
-
----
-
-## Credits
-
-Built with Claude. Station data sourced from Wikipedia's list of US college radio stations, station websites, and the Radio Browser directory. Stream URLs verified against each station's live streaming page.
+- [ ] Keyboard shortcuts (space = play/pause)
+- [ ] Station notes / history / notable shows
