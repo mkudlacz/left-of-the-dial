@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="Left of the Dial">
 <meta name="theme-color" content="#111111">
 <link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%232c1a0c'/%3E%3Crect x='2' y='7' width='28' height='19' rx='2' fill='%23dddbd2'/%3E%3Crect x='4' y='10' width='19' height='8' rx='1' fill='%23f2f0e8'/%3E%3Ccircle cx='27' cy='17' r='4' fill='%23aaa8a0'/%3E%3Ccircle cx='27' cy='17' r='2.5' fill='%23c8c6be'/%3E%3Ccircle cx='8' cy='23' r='1.5' fill='%23c82020'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231a1a1a'/%3E%3Ccircle cx='16' cy='16' r='13' fill='%239c9a92'/%3E%3Cline x1='16' y1='3' x2='16' y2='6.5' stroke='%234a4a4a' stroke-width='1.5' transform='rotate(0,16,16)'/%3E%3Cline x1='16' y1='3' x2='16' y2='6.5' stroke='%234a4a4a' stroke-width='1.5' transform='rotate(30,16,16)'/%3E%3Cline x1='16' y1='3' x2='16' y2='6.5' stroke='%234a4a4a' stroke-width='1.5' transform='rotate(60,16,16)'/%3E%3Cline x1='16' y1='3' x2='16' y2='6.5' stroke='%234a4a4a' stroke-width='1.5' transform='rotate(90,16,16)'/%3E%3Cline x1='16' y1='3' x2='16' y2='6.5' stroke='%234a4a4a' stroke-width='1.5' transform='rotate(120,16,16)'/%3E%3Cline x1='16' y1='3' x2='16' y2='6.5' stroke='%234a4a4a' stroke-width='1.5' transform='rotate(150,16,16)'/%3E%3Cline x1='16' y1='3' x2='16' y2='6.5' stroke='%234a4a4a' stroke-width='1.5' transform='rotate(180,16,16)'/%3E%3Cline x1='16' y1='3' x2='16' y2='6.5' stroke='%234a4a4a' stroke-width='1.5' transform='rotate(210,16,16)'/%3E%3Cline x1='16' y1='3' x2='16' y2='6.5' stroke='%234a4a4a' stroke-width='1.5' transform='rotate(240,16,16)'/%3E%3Cline x1='16' y1='3' x2='16' y2='6.5' stroke='%234a4a4a' stroke-width='1.5' transform='rotate(270,16,16)'/%3E%3Cline x1='16' y1='3' x2='16' y2='6.5' stroke='%234a4a4a' stroke-width='1.5' transform='rotate(300,16,16)'/%3E%3Cline x1='16' y1='3' x2='16' y2='6.5' stroke='%234a4a4a' stroke-width='1.5' transform='rotate(330,16,16)'/%3E%3Ccircle cx='16' cy='16' r='10' fill='%23252525' stroke='%233a3a3a' stroke-width='0.5'/%3E%3Cline x1='16' y1='7' x2='16' y2='11.5' stroke='%23c9a227' stroke-width='2.5' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='16' r='2' fill='%23555'/%3E%3C/svg%3E">
 <title>Left of the Dial</title>
 <style>
   :root {
@@ -25,7 +25,7 @@
     --red: #f87171;
     --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
   html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, 'Inter', sans-serif; overscroll-behavior: none; }
 
   /* ── Header ── */
@@ -50,13 +50,13 @@
     padding: 20px 16px 12px;
   }
   #wordmark {
-    display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+    display: flex; flex-direction: column; gap: 3px; margin-bottom: 12px;
   }
-  #wordmark::before {
-    content: ''; display: inline-block;
-    width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
-    background: #c82020;
-    box-shadow: 0 0 5px rgba(200,32,32,0.9), 0 0 10px rgba(200,32,32,0.4);
+  #wordmark-title-row {
+    display: flex; align-items: center; gap: 9px;
+  }
+  #dial {
+    flex-shrink: 0;
   }
   #wordmark-title {
     font-family: monospace; font-size: 18px; font-weight: 700;
@@ -65,11 +65,12 @@
   }
   #wordmark-sub {
     color: #666; font-family: monospace; font-size: 10px; letter-spacing: 2px;
+    padding-left: 2px;
   }
   #search-row { display: flex; gap: 8px; margin-bottom: 10px; }
   #search-input {
     flex: 1; background: #f2f0e8; border: 1px solid #b0aea6;
-    border-radius: 3px; padding: 9px 12px; color: #111; font-size: 14px;
+    border-radius: 3px; padding: 9px 12px; color: #111; font-size: 16px;
     outline: none; font-family: inherit;
     transition: border-color 0.2s;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);
@@ -202,7 +203,7 @@
   #play-stop-btn {
     width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
     background: var(--amber-dim); border: 1px solid var(--amber-border);
-    color: var(--amber); font-size: 14px; cursor: pointer;
+    color: var(--amber); cursor: pointer;
     display: flex; align-items: center; justify-content: center;
   }
   #np-info { flex: 1; min-width: 0; }
@@ -223,6 +224,7 @@
     border-radius: 5px; padding: 5px 10px; cursor: pointer;
     font-family: monospace; font-size: 11px; letter-spacing: 1px;
     color: #555; text-transform: uppercase; transition: all 0.15s;
+    display: inline-flex; align-items: center; gap: 5px;
   }
   #share-btn:hover { color: var(--amber); border-color: var(--amber-border); }
   #share-btn.copied { color: var(--amber); border-color: var(--amber-border); }
@@ -236,7 +238,27 @@
 
 <div id="header">
   <div id="wordmark">
-    <span id="wordmark-title">LEFT OF THE DIAL</span>
+    <div id="wordmark-title-row">
+      <svg id="dial" width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="11" cy="11" r="10.5" fill="#9c9a92"/>
+      <line x1="11" y1="1" x2="11" y2="3.5" stroke="#4a4a4a" stroke-width="1.2" transform="rotate(0,11,11)"/>
+      <line x1="11" y1="1" x2="11" y2="3.5" stroke="#4a4a4a" stroke-width="1.2" transform="rotate(30,11,11)"/>
+      <line x1="11" y1="1" x2="11" y2="3.5" stroke="#4a4a4a" stroke-width="1.2" transform="rotate(60,11,11)"/>
+      <line x1="11" y1="1" x2="11" y2="3.5" stroke="#4a4a4a" stroke-width="1.2" transform="rotate(90,11,11)"/>
+      <line x1="11" y1="1" x2="11" y2="3.5" stroke="#4a4a4a" stroke-width="1.2" transform="rotate(120,11,11)"/>
+      <line x1="11" y1="1" x2="11" y2="3.5" stroke="#4a4a4a" stroke-width="1.2" transform="rotate(150,11,11)"/>
+      <line x1="11" y1="1" x2="11" y2="3.5" stroke="#4a4a4a" stroke-width="1.2" transform="rotate(180,11,11)"/>
+      <line x1="11" y1="1" x2="11" y2="3.5" stroke="#4a4a4a" stroke-width="1.2" transform="rotate(210,11,11)"/>
+      <line x1="11" y1="1" x2="11" y2="3.5" stroke="#4a4a4a" stroke-width="1.2" transform="rotate(240,11,11)"/>
+      <line x1="11" y1="1" x2="11" y2="3.5" stroke="#4a4a4a" stroke-width="1.2" transform="rotate(270,11,11)"/>
+      <line x1="11" y1="1" x2="11" y2="3.5" stroke="#4a4a4a" stroke-width="1.2" transform="rotate(300,11,11)"/>
+      <line x1="11" y1="1" x2="11" y2="3.5" stroke="#4a4a4a" stroke-width="1.2" transform="rotate(330,11,11)"/>
+      <circle cx="11" cy="11" r="8" fill="#252525" stroke="#3a3a3a" stroke-width="0.5"/>
+      <line x1="11" y1="4.5" x2="11" y2="8" stroke="#c9a227" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="11" cy="11" r="1.5" fill="#555"/>
+    </svg>
+      <span id="wordmark-title">LEFT OF THE DIAL</span>
+    </div>
     <span id="wordmark-sub">COLLEGE · PUBLIC · COMMUNITY RADIO</span>
   </div>
   <div id="search-row">
@@ -245,7 +267,7 @@
   <div id="tabs">
     <button class="tab-btn active" data-tab="browse" onclick="switchTab('browse')">Browse</button>
     <button class="tab-btn" data-tab="favs" onclick="switchTab('favs')">★ Saved (<span id="fav-count">0</span>)</button>
-    <button id="share-btn" onclick="shareFavs()" title="Copy shareable link to saved stations">⤴ Share</button>
+    <button id="share-btn" onclick="shareFavs()" title="Copy shareable link to saved stations"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/><polyline points="16,6 12,2 8,6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Share</button>
   </div>
   <div id="filter-row" id="filter-row"></div>
 </div>
@@ -275,7 +297,7 @@
     <div id="tuning-label">TUNING…</div>
   </div>
   <div id="np-row">
-    <button id="play-stop-btn" onclick="togglePlay()">▶</button>
+    <button id="play-stop-btn" onclick="togglePlay()"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="6,3 20,12 6,21"/></svg></button>
     <div id="np-info">
       <div id="np-name">—</div>
       <div id="np-status">—</div>
@@ -755,7 +777,7 @@ function updateNowPlaying() {
   spacer.classList.add('visible');
 
   const btn = document.getElementById('play-stop-btn');
-  btn.textContent = state.playing ? '⏹' : '▶';
+  btn.innerHTML = state.playing ? '<svg viewBox=\"0 0 24 24\" width=\"14\" height=\"14\" fill=\"currentColor\"><rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"1.5\"/></svg>' : '<svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"currentColor\"><polygon points=\"6,3 20,12 6,21\"/></svg>';
 
   const nameEl = document.getElementById('np-name');
   nameEl.innerHTML = '';
@@ -784,9 +806,9 @@ function shareFavs() {
   const url = location.href.split('#')[0] + '#favs=' + state.favs.join(',');
   navigator.clipboard.writeText(url).then(() => {
     const btn = document.getElementById('share-btn');
-    btn.textContent = '✓ Copied';
+    btn.innerHTML = '✓ Copied';
     btn.classList.add('copied');
-    setTimeout(() => { btn.textContent = '⤴ Share'; btn.classList.remove('copied'); }, 2000);
+    setTimeout(() => { btn.innerHTML = '<svg viewBox=\"0 0 24 24\" width=\"13\" height=\"13\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3\"/><polyline points=\"16,6 12,2 8,6\"/><line x1=\"12\" y1=\"2\" x2=\"12\" y2=\"15\"/></svg> Share'; btn.classList.remove('copied'); }, 2000);
   }).catch(() => {
     prompt('Copy this link to share your saved stations:', url);
   });
