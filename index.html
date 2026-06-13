@@ -76,12 +76,6 @@
   }
   #search-input:focus { border-color: #8a6410; }
   #search-input::placeholder { color: #999; }
-  #search-btn {
-    background: #252525; border: 1px solid #111;
-    border-radius: 3px; padding: 9px 14px; color: #ddd;
-    font-family: monospace; font-size: 12px; letter-spacing: 1px; cursor: pointer;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.07);
-  }
   #tabs { display: flex; gap: 5px; margin-bottom: 8px; }
   .tab-btn {
     background: transparent; border: 1px solid transparent;
@@ -219,8 +213,7 @@
   }
   #np-status { color: #888; font-family: monospace; font-size: 11px; margin-top: 2px; }
   #np-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-  #np-vol { width: 70px; accent-color: var(--amber); cursor: pointer; }
-  #np-link { color: #777; font-family: monospace; font-size: 10px; text-decoration: none; }
+#np-link { color: #777; font-family: monospace; font-size: 10px; text-decoration: none; }
   #np-link:hover { color: var(--amber); }
 
   /* ── Share button ── */
@@ -248,7 +241,6 @@
   </div>
   <div id="search-row">
     <input id="search-input" type="search" placeholder='Search — "WKCR", "Columbia", "Seattle", "jazz"…' autocomplete="off" autocorrect="off" spellcheck="false">
-    <button id="search-btn" onclick="doSearch()">TUNE</button>
   </div>
   <div id="tabs">
     <button class="tab-btn active" data-tab="browse" onclick="switchTab('browse')">Browse</button>
@@ -289,7 +281,6 @@
       <div id="np-status">—</div>
     </div>
     <div id="np-right">
-      <input id="np-vol" type="range" min="0" max="1" step="0.02" value="0.85" oninput="setVol(this.value)">
       <a id="np-link" href="#" target="_blank" rel="noreferrer"></a>
     </div>
   </div>
@@ -532,7 +523,6 @@ let state = {
   currentId: null,
   playing: false,
   tuning: false,
-  volume: 0.85,
   favs: [],
 };
 
@@ -552,7 +542,6 @@ try { state.favs = JSON.parse(localStorage.getItem('lotd-favs') || localStorage.
 })();
 
 const audio = document.getElementById('audio');
-audio.volume = state.volume;
 let tuneTimer = null;
 let tuningRaf = null;
 
@@ -747,11 +736,6 @@ function stopTuningBar() {
   const bar = document.getElementById('tuning-bar');
   bar.style.display = 'none';
   cancelAnimationFrame(tuningRaf);
-}
-
-function setVol(v) {
-  state.volume = parseFloat(v);
-  audio.volume = state.volume;
 }
 
 // ─────────────────────────────────────────────────────────────
