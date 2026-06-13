@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Left of the Dial">
+<meta name="theme-color" content="#111111">
+<link rel="manifest" href="manifest.json">
+<title>Left of the Dial</title>
+<style>
+  :root {
+    --bg: #111111;
+    --bg2: #1a1a1a;
+    --bg3: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.09);
+    --amber: #c9a227;
+    --amber-dim: rgba(201,162,39,0.15);
+    --amber-border: rgba(201,162,39,0.38);
+    --text: #cecece;
+    --text-dim: #666666;
+    --text-faint: #3a3a3a;
+    --red: #f87171;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, 'Inter', sans-serif; overscroll-behavior: none; }
+
+  /* ── Header ── */
+  #header {
+    position: sticky; top: 0; z-index: 50;
+    background:
+      repeating-linear-gradient(
+        90deg,
+        transparent 0px, transparent 38px,
+        rgba(0,0,0,0.07) 38px, rgba(0,0,0,0.07) 39px,
+        transparent 39px, transparent 79px,
+        rgba(255,255,255,0.018) 79px, rgba(255,255,255,0.018) 81px
+      ),
+      repeating-linear-gradient(
+        180deg,
+        transparent 0px, transparent 4px,
+        rgba(255,255,255,0.012) 4px, rgba(255,255,255,0.012) 5px
+      ),
+      linear-gradient(90deg,
+        #2c1a0c 0%, #4a2c16 14%, #3a2210 30%,
+        #56321e 50%, #3e2614 68%, #4a2c16 82%, #2c1a0c 100%
+      );
+    border-bottom: 2px solid #1a0e06;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 4px 20px rgba(0,0,0,0.7);
+    padding: 14px 16px 10px;
+  }
+  #wordmark {
+    display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px;
+  }
+  #wordmark-title {
+    font-family: monospace; font-size: 18px; font-weight: 700;
+    color: var(--amber); letter-spacing: 4px;
+    text-shadow: 0 0 10px rgba(201,162,39,0.55), 0 0 24px rgba(201,162,39,0.2);
+  }
+  #wordmark-sub {
+    color: rgba(185,160,135,0.55); font-family: monospace; font-size: 10px; letter-spacing: 2px;
+  }
+  #search-row { display: flex; gap: 8px; margin-bottom: 10px; }
+  #search-input {
+    flex: 1; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px; padding: 9px 12px; color: var(--text); font-size: 14px;
+    outline: none; font-family: inherit;
+    transition: border-color 0.2s;
+  }
+  #search-input:focus { border-color: rgba(201,162,39,0.4); }
+  #search-input::placeholder { color: var(--text-faint); }
+  #search-btn {
+    background: var(--amber-dim); border: 1px solid var(--amber-border);
+    border-radius: 8px; padding: 9px 14px; color: var(--amber);
+    font-family: monospace; font-size: 12px; letter-spacing: 1px; cursor: pointer;
+  }
+  #tabs { display: flex; gap: 5px; margin-bottom: 8px; }
+  .tab-btn {
+    background: transparent; border: 1px solid transparent;
+    border-radius: 5px; padding: 5px 12px; cursor: pointer;
+    font-family: monospace; font-size: 11px; letter-spacing: 1px;
+    color: var(--text-dim); text-transform: uppercase; transition: all 0.15s;
+  }
+  .tab-btn.active {
+    background: var(--amber-dim); border-color: var(--amber-border); color: var(--amber);
+  }
+  #filter-row {
+    display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px;
+  }
+  .filter-chip {
+    background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.11);
+    border-radius: 20px; padding: 3px 10px; cursor: pointer;
+    font-size: 11px; color: rgba(190,165,140,0.65); transition: all 0.15s;
+  }
+  .filter-chip.active {
+    background: rgba(201,162,39,0.2); border-color: rgba(201,162,39,0.48); color: var(--amber);
+  }
+
+  /* ── Content ── */
+  #content { padding: 12px 16px 0; max-width: 700px; margin: 0 auto; }
+  #status-msg {
+    padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 12px;
+    display: none;
+  }
+  #status-msg.error { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); color: #fca5a5; }
+  #status-msg.info { background: rgba(201,162,39,0.08); border: 1px solid rgba(201,162,39,0.2); color: var(--amber); }
+
+  #loading {
+    display: none; justify-content: center; align-items: flex-end;
+    gap: 3px; padding: 48px 0; height: 80px;
+  }
+  .load-bar {
+    width: 3px; background: var(--amber); border-radius: 2px; opacity: 0.6;
+    animation: vuload 0.5s ease-in-out infinite alternate;
+  }
+  @keyframes vuload { from { transform: scaleY(0.2); } to { transform: scaleY(1); } }
+
+  #empty { display: none; text-align: center; padding: 60px 20px; color: var(--text-faint); }
+  #empty .empty-icon { font-size: 28px; margin-bottom: 10px; }
+  #empty .empty-label { font-family: monospace; letter-spacing: 2px; font-size: 11px; }
+  #empty .empty-hint { font-size: 12px; margin-top: 6px; }
+
+  #station-list { display: flex; flex-direction: column; gap: 7px; padding-bottom: 16px; }
+
+  .station-card {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 14px; cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    -webkit-user-select: none; user-select: none;
+  }
+  .station-card:active { background: rgba(255,255,255,0.06); }
+  .station-card.active {
+    background: linear-gradient(120deg, rgba(201,162,39,0.09), rgba(201,162,39,0.02));
+    border-color: var(--amber-border);
+  }
+  .card-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .card-left { flex: 1; min-width: 0; }
+  .card-name-row { display: flex; align-items: center; gap: 7px; margin-bottom: 3px; flex-wrap: wrap; }
+  .on-air-badge {
+    background: rgba(201,162,39,0.18); border: 1px solid rgba(201,162,39,0.42);
+    border-radius: 3px; padding: 1px 5px;
+    font-family: monospace; font-size: 9px; letter-spacing: 1px;
+    color: var(--amber); font-weight: 700; flex-shrink: 0;
+  }
+  .vu-meter { display: inline-flex; gap: 2px; align-items: flex-end; height: 12px; flex-shrink: 0; }
+  .vu-bar {
+    width: 2px; background: var(--amber); border-radius: 1px;
+    animation: vubar 0.4s ease-in-out infinite alternate;
+  }
+  @keyframes vubar { from { transform: scaleY(0.3); } to { transform: scaleY(1.4); } }
+  .card-name {
+    font-size: 14px; font-weight: 600; color: var(--text);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .station-card.active .card-name { color: var(--amber); }
+  .card-meta { font-size: 12px; color: var(--text-dim); }
+  .card-genre { font-size: 11px; color: var(--text-faint); margin-top: 2px; }
+  .card-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 5px; }
+  .card-tag {
+    font-size: 10px; color: var(--text-faint);
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 3px; padding: 1px 5px;
+  }
+  .fav-btn {
+    background: none; border: none; cursor: pointer; font-size: 18px;
+    padding: 0 0 0 12px; flex-shrink: 0; color: var(--text-faint);
+    transition: color 0.2s; line-height: 1;
+  }
+  .fav-btn.saved { color: var(--amber); }
+
+  /* ── Now Playing ── */
+  #now-playing {
+    display: none;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(10,10,10,0.98); backdrop-filter: blur(8px);
+    border-top: 1px solid rgba(201,162,39,0.28);
+    padding: 10px 16px calc(12px + var(--safe-bottom));
+    z-index: 100;
+  }
+  #tuning-bar {
+    position: relative; height: 18px; margin-bottom: 8px; overflow: hidden; display: none;
+  }
+  #tuning-track {
+    position: absolute; top: 50%; left: 0; right: 0; height: 1px;
+    background: repeating-linear-gradient(90deg, rgba(201,162,39,0.22) 0, rgba(201,162,39,0.22) 3px, transparent 3px, transparent 10px);
+    transform: translateY(-50%);
+  }
+  #tuning-needle {
+    position: absolute; top: 5%; bottom: 5%; width: 2px;
+    background: linear-gradient(180deg, transparent, var(--amber), transparent);
+    box-shadow: 0 0 8px 2px rgba(201,162,39,0.6);
+    border-radius: 2px; transition: left 0.06s linear;
+  }
+  #tuning-label {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    font-family: monospace; font-size: 9px; letter-spacing: 2px;
+    color: rgba(201,162,39,0.55);
+  }
+  #np-row { display: flex; align-items: center; gap: 12px; }
+  #play-stop-btn {
+    width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+    background: var(--amber-dim); border: 1px solid var(--amber-border);
+    color: var(--amber); font-size: 14px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #np-info { flex: 1; min-width: 0; }
+  #np-name {
+    color: var(--amber); font-weight: 600; font-size: 14px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    display: flex; align-items: center; gap: 7px;
+  }
+  #np-status { color: var(--text-faint); font-family: monospace; font-size: 11px; margin-top: 2px; }
+  #np-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  #np-vol { width: 70px; accent-color: var(--amber); cursor: pointer; }
+  #np-link { color: var(--text-faint); font-family: monospace; font-size: 10px; text-decoration: none; }
+  #np-link:hover { color: var(--amber); }
+
+  /* ── Share button ── */
+  #share-btn {
+    margin-left: auto;
+    background: transparent; border: 1px solid transparent;
+    border-radius: 5px; padding: 5px 10px; cursor: pointer;
+    font-family: monospace; font-size: 11px; letter-spacing: 1px;
+    color: var(--text-dim); text-transform: uppercase; transition: all 0.15s;
+  }
+  #share-btn:hover { color: var(--amber); border-color: var(--amber-border); }
+  #share-btn.copied { color: var(--amber); border-color: var(--amber-border); }
+
+  /* ── Spacer under list for now-playing bar ── */
+  #np-spacer { height: 0; transition: height 0.2s; }
+  #np-spacer.visible { height: 80px; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div id="wordmark">
+    <span id="wordmark-title">LEFT OF THE DIAL</span>
+    <span id="wordmark-sub">COLLEGE · PUBLIC · COMMUNITY RADIO</span>
+  </div>
+  <div id="search-row">
+    <input id="search-input" type="search" placeholder='Search — "WKCR", "Columbia", "Seattle", "jazz"…' autocomplete="off" autocorrect="off" spellcheck="false">
+    <button id="search-btn" onclick="doSearch()">TUNE</button>
+  </div>
+  <div id="tabs">
+    <button class="tab-btn active" data-tab="browse" onclick="switchTab('browse')">Browse</button>
+    <button class="tab-btn" data-tab="favs" onclick="switchTab('favs')">★ Saved (<span id="fav-count">0</span>)</button>
+    <button id="share-btn" onclick="shareFavs()" title="Copy shareable link to saved stations">⤴ Share</button>
+  </div>
+  <div id="filter-row" id="filter-row"></div>
+</div>
+
+<div id="content">
+  <div id="status-msg"></div>
+  <div id="loading">
+    <div class="load-bar" style="height:8px;animation-delay:0s"></div>
+    <div class="load-bar" style="height:13px;animation-delay:0.1s"></div>
+    <div class="load-bar" style="height:10px;animation-delay:0.2s"></div>
+    <div class="load-bar" style="height:16px;animation-delay:0.3s"></div>
+    <div class="load-bar" style="height:9px;animation-delay:0.4s"></div>
+  </div>
+  <div id="empty">
+    <div class="empty-icon">📻</div>
+    <div class="empty-label" id="empty-label">NO STATIONS FOUND</div>
+    <div class="empty-hint" id="empty-hint">Try a different search term.</div>
+  </div>
+  <div id="station-list"></div>
+  <div id="np-spacer"></div>
+</div>
+
+<div id="now-playing">
+  <div id="tuning-bar">
+    <div id="tuning-track"></div>
+    <div id="tuning-needle"></div>
+    <div id="tuning-label">TUNING…</div>
+  </div>
+  <div id="np-row">
+    <button id="play-stop-btn" onclick="togglePlay()">▶</button>
+    <div id="np-info">
+      <div id="np-name">—</div>
+      <div id="np-status">—</div>
+    </div>
+    <div id="np-right">
+      <input id="np-vol" type="range" min="0" max="1" step="0.02" value="0.85" oninput="setVol(this.value)">
+      <a id="np-link" href="#" target="_blank" rel="noreferrer"></a>
+    </div>
+  </div>
+</div>
+
+<audio id="audio"></audio>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+// STATION DATABASE
+// Format: { id, name, freq, city, state, org, genre, tags[], url, site }
+// Tags drive filter chips. url is the direct MP3/AAC stream.
+// ─────────────────────────────────────────────────────────────
+const DB = [
+
+// ══ NEW ENGLAND ══
+{ id:'whrb', name:'WHRB 95.3', freq:'95.3 FM', city:'Cambridge', state:'MA', org:'Harvard University', genre:'Classical · Jazz · Rock', tags:['college','classical','jazz','boston','new england'], url:'http://stream.whrb.org:8000/whrb-mp3', site:'whrb.org' },
+{ id:'wmbr', name:'WMBR 88.1', freq:'88.1 FM', city:'Cambridge', state:'MA', org:'MIT', genre:'Freeform · Eclectic', tags:['college','freeform','boston','new england'], url:'https://wmbr.org/cgi-bin/stream', site:'wmbr.org' },
+{ id:'wzbc', name:'WZBC 90.3', freq:'90.3 FM', city:'Newton', state:'MA', org:'Boston College', genre:'Freeform · Alternative', tags:['college','freeform','boston','new england'], url:'https://stream.wzbc.org/wzbc', site:'wzbc.org' },
+{ id:'wers', name:'WERS 88.9', freq:'88.9 FM', city:'Boston', state:'MA', org:'Emerson College', genre:'Indie · Alternative', tags:['college','indie','boston','new england'], url:'http://marconi.emerson.edu:8000/wers', site:'wers.org' },
+{ id:'wmfo', name:'WMFO 91.5', freq:'91.5 FM', city:'Medford', state:'MA', org:'Tufts University', genre:'Freeform', tags:['college','freeform','boston','new england'], url:'http://new-webstream.wmfo.org/;', site:'wmfo.org' },
+/* { id:'wbrs', name:'WBRS 100.1', freq:'100.1 FM', city:'Waltham', state:'MA', org:'Brandeis University', genre:'Rock · Indie', tags:['college','indie','boston','new england'], url:'https://stream.wbrs.org/listen.mp3', site:'wbrs.org' }, */
+/* { id:'wmhc', name:'WMHC 91.5', freq:'91.5 FM', city:'South Hadley', state:'MA', org:'Mount Holyoke College', genre:'Eclectic', tags:['college','eclectic','new england'], url:'https://wmhc.org/stream.mp3', site:'wmhc.org' }, */
+{ id:'wamh', name:'WAMH 89.3', freq:'89.3 FM', city:'Amherst', state:'MA', org:'Amherst College', genre:'Eclectic', tags:['college','eclectic','new england'], url:'https://wamh.org/stream.mp3', site:'wamh.org' },
+/* { id:'wmua', name:'WMUA 91.1', freq:'91.1 FM', city:'Amherst', state:'MA', org:'UMass Amherst', genre:'Freeform', tags:['college','freeform','new england'], url:'https://wmua.org:8000/wmua.mp3', site:'wmua.org' }, */
+/* { id:'wzly', name:'WZLY 91.5', freq:'91.5 FM', city:'Wellesley', state:'MA', org:'Wellesley College', genre:'Eclectic', tags:['college','eclectic','new england'], url:'https://wzly.net/stream.mp3', site:'wzly.net' }, */
+{ id:'wcfm', name:'WCFM 91.9', freq:'91.9 FM', city:'Williamstown', state:'MA', org:'Williams College', genre:'Eclectic', tags:['college','eclectic','new england'], url:'https://wcfm.williams.edu/stream.mp3', site:'wcfm.williams.edu' },
+{ id:'wozq', name:'WOZQ 91.9', freq:'91.9 FM', city:'Northampton', state:'MA', org:'Smith College', genre:'Eclectic', tags:['college','eclectic','new england'], url:'https://edge.mixlr.com/channel/ultyj', site:'wozq.smith.edu' },
+{ id:'wrbb', name:'WRBB 104.9', freq:'104.9 FM', city:'Boston', state:'MA', org:'Northeastern University', genre:'Eclectic', tags:['college','eclectic','boston','new england'], url:'https://audio-edge-qse4n.yyz.g.radiomast.io/dafd1179-5404-4939-9c1c-a014c6964254', site:'wrbb.neu.edu' },
+{ id:'wbor', name:'WBOR 91.1', freq:'91.1 FM', city:'Brunswick', state:'ME', org:'Bowdoin College', genre:'Freeform', tags:['college','freeform','new england'], url:'https://listen.wbor.org/', site:'wbor.org' },
+{ id:'wmpg', name:'WMPG 90.9', freq:'90.9 FM', city:'Portland', state:'ME', org:'USM', genre:'Community · Eclectic', tags:['community','eclectic','new england'], url:'http://quarrel.str3am.com:7270/', site:'wmpg.org' },
+/* { id:'wmhb', name:'WMHB 89.7', freq:'89.7 FM', city:'Waterville', state:'ME', org:'Colby College', genre:'Freeform', tags:['college','freeform','new england'], url:'https://streaming.live365.com/a46702', site:'wmhb.org' }, */
+{ id:'wunh', name:'WUNH 91.3', freq:'91.3 FM', city:'Durham', state:'NH', org:'UNH', genre:'Freeform', tags:['college','freeform','new england'], url:'http://s9.viastreaming.net:9000/;.mp3', site:'wunh.unh.edu' },
+{ id:'wgby', name:'WGBY 91.7', freq:'91.7 FM', city:'Springfield', state:'MA', org:'WGBY Public Media', genre:'Public Radio · NPR', tags:['public','npr','news','new england'], url:'https://playerservices.streamtheworld.com/api/livestream-redirect/WGBYFM.mp3', site:'wgby.org' },
+/* { id:'wbur', name:'WBUR 90.9', freq:'90.9 FM', city:'Boston', state:'MA', org:'Boston University', genre:'Public Radio · NPR · News', tags:['public','npr','news','boston','new england'], url:'https://wbur.streamguys1.com/wbur', site:'wbur.org' }, */
+{ id:'wgbh', name:'WGBH 89.7', freq:'89.7 FM', city:'Boston', state:'MA', org:'GBH', genre:'Classical · Jazz · Public', tags:['public','classical','boston','new england'], url:'https://wgbh-live.streamguys1.com/wgbh.mp3', site:'wgbh.org' },
+{ id:'wnpr', name:'WNPR 90.5', freq:'90.5 FM', city:'Hartford', state:'CT', org:'Connecticut Public', genre:'Public Radio · NPR', tags:['public','npr','news','new england'], url:'http://18503.live.streamtheworld.com/WNPRFM_SC', site:'ctpublic.org' },
+{ id:'wesu', name:'WESU 88.1', freq:'88.1 FM', city:'Middletown', state:'CT', org:'Wesleyan University', genre:'Freeform · Community', tags:['college','freeform','new england'], url:'http://radio.wesleyan.edu:8000/stream', site:'wesufm.org' },
+{ id:'wrtc', name:'WRTC 89.3', freq:'89.3 FM', city:'Hartford', state:'CT', org:'Trinity College', genre:'Freeform', tags:['college','freeform','new england'], url:'http://live.adsciconsolidated.com/wrtchigh.mp3', site:'wrtcfm.com' },
+/* { id:'whus', name:'WHUS 91.7', freq:'91.7 FM', city:'Storrs', state:'CT', org:'UConn', genre:'Freeform', tags:['college','freeform','new england'], url:'http://stream.whus.org:8000/whusfm', site:'whus.org' }, */
+
+// ══ NEW YORK / TRI-STATE ══
+{ id:'wkcr', name:'WKCR 89.9', freq:'89.9 FM', city:'New York', state:'NY', org:'Columbia University', genre:'Jazz · Classical · Freeform', tags:['college','jazz','new york','tri-state'], url:'http://wkcr.streamguys1.com/live', site:'wkcr.org' },
+{ id:'wnyu', name:'WNYU 89.1', freq:'89.1 FM', city:'New York', state:'NY', org:'NYU', genre:'Eclectic', tags:['college','eclectic','new york','tri-state'], url:'http://cinema.acs.its.nyu.edu:8000/wnyu128.mp3', site:'wnyu.org' },
+{ id:'wfuv', name:'WFUV 90.7', freq:'90.7 FM', city:'New York', state:'NY', org:'Fordham University', genre:'Adult Alternative · Public', tags:['college','public','new york','tri-state'], url:'https://audio-mp3.ibiblio.org/wfuv-128.mp3', site:'wfuv.org' },
+{ id:'wnyc', name:'WNYC 93.9', freq:'93.9 FM', city:'New York', state:'NY', org:'New York Public Radio', genre:'Public Radio · NPR · News', tags:['public','npr','news','new york','tri-state'], url:'https://fm939.wnyc.org/wnycfm.aac', site:'wnyc.org' },
+{ id:'wqxr', name:'WQXR 105.9', freq:'105.9 FM', city:'New York', state:'NY', org:'New York Public Radio', genre:'Classical', tags:['public','classical','new york','tri-state'], url:'https://stream.wqxr.org/wqxr-web', site:'wqxr.org' },
+{ id:'wfmu', name:'WFMU 91.1', freq:'91.1 FM', city:'Jersey City', state:'NJ', org:'Auricle Communications', genre:'Freeform · Eclectic', tags:['freeform','community','new york','tri-state'], url:'https://stream0.wfmu.org/freeform-128k', site:'wfmu.org' },
+{ id:'wprb', name:'WPRB 103.3', freq:'103.3 FM', city:'Princeton', state:'NJ', org:'Princeton University', genre:'Freeform · Classical', tags:['college','freeform','classical','tri-state'], url:'https://wprb.com/stream.mp3', site:'wprb.com' },
+/* { id:'wsou', name:'WSOU 89.5', freq:'89.5 FM', city:'South Orange', state:'NJ', org:'Seton Hall University', genre:'Hard Rock · Metal', tags:['college','rock','tri-state'], url:'https://wsou.net:8000/wsou.mp3', site:'wsou.net' }, */
+{ id:'wrsu', name:'WRSU 88.7', freq:'88.7 FM', city:'New Brunswick', state:'NJ', org:'Rutgers University', genre:'Freeform', tags:['college','freeform','tri-state'], url:'https://wrsu-libstrm.radioca.st/stream', site:'wrsu.rutgers.edu' },
+/* { id:'wmsc', name:'WMSC 90.3', freq:'90.3 FM', city:'Upper Montclair', state:'NJ', org:'Montclair State University', genre:'Eclectic', tags:['college','eclectic','tri-state'], url:'https://wmsc.org:8000/wmsc.mp3', site:'wmsc.org' }, */
+{ id:'wicb', name:'WICB 91.7', freq:'91.7 FM', city:'Ithaca', state:'NY', org:'Ithaca College', genre:'Alternative', tags:['college','indie','new york'], url:'https://wicb.org/stream.mp3', site:'wicb.org' },
+/* { id:'wvbr', name:'WVBR 93.5', freq:'93.5 FM', city:'Ithaca', state:'NY', org:'Cornell University', genre:'Rock · Alternative', tags:['college','rock','new york'], url:'https://streaming.live365.com/a25496', site:'wvbr.com' }, */
+{ id:'whrw', name:'WHRW 90.5', freq:'90.5 FM', city:'Binghamton', state:'NY', org:'Binghamton University', genre:'Freeform', tags:['college','freeform','new york'], url:'http://stream.whrwfm.org/new', site:'whrw.fm' },
+/* { id:'wkrb', name:'WKRB 90.3', freq:'90.3 FM', city:'Brooklyn', state:'NY', org:'Kingsborough CC', genre:'Eclectic', tags:['college','eclectic','new york','tri-state'], url:'https://wkrb.org:8000/stream.mp3', site:'wkrb.org' }, */
+{ id:'wcdb', name:'WCDB 90.9', freq:'90.9 FM', city:'Albany', state:'NY', org:'SUNY Albany', genre:'Freeform', tags:['college','freeform','new york'], url:'https://streams.wcdb.fm/stream', site:'wcdb.fm' },
+{ id:'wvkr', name:'WVKR 91.3', freq:'91.3 FM', city:'Poughkeepsie', state:'NY', org:'Vassar College', genre:'Freeform', tags:['college','freeform','new york'], url:'https://26733.live.streamtheworld.com/WVKRFM.mp3', site:'wvkr.vassar.edu' },
+/* { id:'wbny', name:'WBNY 91.3', freq:'91.3 FM', city:'Buffalo', state:'NY', org:'Buffalo State University', genre:'Eclectic', tags:['college','eclectic','new york'], url:'https://wbny.buffalostate.edu:8000/wbny.mp3', site:'wbny.buffalostate.edu' }, */
+/* { id:'whcl', name:'WHCL 88.7', freq:'88.7 FM', city:'Clinton', state:'NY', org:'Hamilton College', genre:'Eclectic', tags:['college','eclectic','new york'], url:'https://whcl.hamilton.edu:8000/whcl.mp3', site:'whcl.hamilton.edu' }, */
+/* { id:'wrcu', name:'WRCU 90.1', freq:'90.1 FM', city:'Hamilton', state:'NY', org:'Colgate University', genre:'Freeform', tags:['college','freeform','new york'], url:'https://wrcu.org:8000/stream.mp3', site:'wrcu.org' }, */
+/* { id:'walf', name:'WALF 89.7', freq:'89.7 FM', city:'Alfred', state:'NY', org:'Alfred University', genre:'Eclectic', tags:['college','eclectic','new york'], url:'https://walf.alfred.edu:8000/stream.mp3', site:'walf.alfred.edu' }, */
+
+// ══ MID-ATLANTIC ══
+/* { id:'wmuc', name:'WMUC 90.5', freq:'90.5 FM', city:'College Park', state:'MD', org:'University of Maryland', genre:'Freeform', tags:['college','freeform','mid-atlantic'], url:'https://wmuc.umd.edu:8000/wmuc.mp3', site:'wmuc.umd.edu' }, */
+/* { id:'wvud', name:'WVUD 91.3', freq:'91.3 FM', city:'Newark', state:'DE', org:'University of Delaware', genre:'Freeform', tags:['college','freeform','mid-atlantic'], url:'https://wvud.udel.edu:8000/wvud.mp3', site:'wvud.udel.edu' }, */
+{ id:'wxpn', name:'WXPN 88.5', freq:'88.5 FM', city:'Philadelphia', state:'PA', org:'University of Pennsylvania', genre:'Adult Album Alternative', tags:['college','public','indie','mid-atlantic','philadelphia'], url:'https://wxpn.xpn.org/xpnmp3hi', site:'xpn.org' },
+{ id:'wkdu', name:'WKDU 91.7', freq:'91.7 FM', city:'Philadelphia', state:'PA', org:'Drexel University', genre:'Freeform', tags:['college','freeform','mid-atlantic','philadelphia'], url:'http://streams.wkdu.org/listen.mp3', site:'wkdu.org' },
+/* { id:'wqhs', name:'WQHS 90.1', freq:'90.1 FM', city:'Philadelphia', state:'PA', org:'UPenn', genre:'Classical · Jazz', tags:['college','classical','jazz','mid-atlantic','philadelphia'], url:'https://wqhs.upenn.edu:8000/stream.mp3', site:'wqhs.upenn.edu' }, */
+{ id:'wrct', name:'WRCT 88.3', freq:'88.3 FM', city:'Pittsburgh', state:'PA', org:'Carnegie Mellon University', genre:'Freeform', tags:['college','freeform','mid-atlantic'], url:'http://stream.wrct.org/wrct-hi.mp3', site:'wrct.org' },
+{ id:'wpts', name:'WPTS 92.1', freq:'92.1 FM', city:'Pittsburgh', state:'PA', org:'University of Pittsburgh', genre:'Alternative · Rock', tags:['college','rock','mid-atlantic'], url:'http://audio.wpts.pitt.edu:8000/wpts_live_128s.mp3', site:'wpts.pitt.edu' },
+{ id:'whyy', name:'WHYY 90.9', freq:'90.9 FM', city:'Philadelphia', state:'PA', org:'WHYY Inc.', genre:'Public Radio · NPR · News', tags:['public','npr','news','mid-atlantic','philadelphia'], url:'https://playerservices.streamtheworld.com/api/livestream-redirect/WHYYFM.mp3', site:'whyy.org' },
+{ id:'wamu', name:'WAMU 88.5', freq:'88.5 FM', city:'Washington', state:'DC', org:'American University', genre:'Public Radio · NPR · Bluegrass', tags:['public','npr','news','mid-atlantic'], url:'https://playerservices.streamtheworld.com/api/livestream-redirect/WAMUFM.mp3', site:'wamu.org' },
+/* { id:'weta', name:'WETA 90.9', freq:'90.9 FM', city:'Washington', state:'DC', org:'WETA', genre:'Classical · Public', tags:['public','classical','mid-atlantic'], url:'https://stream.wetafm.org/wetafm.mp3', site:'weta.org' }, */
+
+// ══ SOUTHEAST ══
+{ id:'wrek', name:'WREK 91.1', freq:'91.1 FM', city:'Atlanta', state:'GA', org:'Georgia Tech', genre:'Freeform', tags:['college','freeform','southeast'], url:'https://streaming.wrek.org/wrek-128k.mp3', site:'wrek.org' },
+{ id:'wras', name:'WRAS 88.5', freq:'88.5 FM', city:'Atlanta', state:'GA', org:'Georgia State University', genre:'Alternative', tags:['college','indie','southeast'], url:'https://gpb.streamguys1.com/gpb-atlanta-aac-website', site:'wras.gsu.edu' },
+/* { id:'wuog', name:'WUOG 90.5', freq:'90.5 FM', city:'Athens', state:'GA', org:'University of Georgia', genre:'Indie · Alternative', tags:['college','indie','southeast'], url:'https://wuog.org:8000/wuog-128k.mp3', site:'wuog.org' }, */
+{ id:'wclk', name:'WCLK 91.9', freq:'91.9 FM', city:'Atlanta', state:'GA', org:'Clark Atlanta University', genre:'Jazz · Blues', tags:['college','jazz','blues','southeast'], url:'http://17993.live.streamtheworld.com:3690/WCLKFM_SC', site:'wclk.com' },
+/* { id:'wvfs', name:'WVFS 89.7', freq:'89.7 FM', city:'Tallahassee', state:'FL', org:'Florida State University', genre:'Freeform · Alternative', tags:['college','freeform','southeast'], url:'https://wvfs.fsu.edu:8000/wvfs.mp3', site:'wvfs.fsu.edu' }, */
+/* { id:'wvum', name:'WVUM 90.5', freq:'90.5 FM', city:'Coral Gables', state:'FL', org:'University of Miami', genre:'Freeform', tags:['college','freeform','southeast'], url:'https://wvum.miami.edu:8000/stream.mp3', site:'wvum.miami.edu' }, */
+{ id:'wprk', name:'WPRK 91.5', freq:'91.5 FM', city:'Winter Park', state:'FL', org:'Rollins College', genre:'Eclectic', tags:['college','eclectic','southeast'], url:'http://wprk.broadcasttool.stream/stream', site:'wprk.rollins.edu' },
+{ id:'wxyc', name:'WXYC 89.3', freq:'89.3 FM', city:'Chapel Hill', state:'NC', org:'UNC Chapel Hill', genre:'Freeform · Eclectic', tags:['college','freeform','southeast'], url:'https://audio-mp3.ibiblio.org/wxyc.mp3', site:'wxyc.org' },
+/* { id:'wknc', name:'WKNC 88.1', freq:'88.1 FM', city:'Raleigh', state:'NC', org:'NC State University', genre:'Freeform · Alternative', tags:['college','freeform','southeast'], url:'https://streaming.live365.com/a45877', site:'wknc.org' }, */
+/* { id:'wvvs', name:'WVVS 90.5', freq:'90.5 FM', city:'Davidson', state:'NC', org:'Davidson College', genre:'Eclectic', tags:['college','eclectic','southeast'], url:'https://wvvs.davidson.edu:8000/stream.mp3', site:'wvvs.davidson.edu' }, */
+/* { id:'wrfl', name:'WRFL 88.1', freq:'88.1 FM', city:'Lexington', state:'KY', org:'University of Kentucky', genre:'Freeform', tags:['college','freeform','southeast'], url:'https://wrfl.fm/stream', site:'wrfl.fm' }, */
+{ id:'wtul', name:'WTUL 91.5', freq:'91.5 FM', city:'New Orleans', state:'LA', org:'Tulane University', genre:'Freeform · Eclectic', tags:['college','freeform','southeast'], url:'https://stream.wtulneworleans.com/', site:'wtul.fm' },
+{ id:'wwoz', name:'WWOZ 90.7', freq:'90.7 FM', city:'New Orleans', state:'LA', org:'Friends of WWOZ', genre:'Jazz · Blues · New Orleans', tags:['community','jazz','blues','southeast'], url:'https://wwoz-sc.streamguys1.com/wwoz-hi.mp3', site:'wwoz.org' },
+/* { id:'klsu', name:'KLSU 91.1', freq:'91.1 FM', city:'Baton Rouge', state:'LA', org:'LSU', genre:'Freeform', tags:['college','freeform','southeast'], url:'https://listen.lsureveille.com/stream', site:'klsu.fm' }, */
+
+// ══ MIDWEST ══
+/* { id:'wnur', name:'WNUR 89.3', freq:'89.3 FM', city:'Evanston', state:'IL', org:'Northwestern University', genre:'Jazz · Rock · Classical', tags:['college','jazz','classical','midwest','chicago'], url:'https://wnur.org/listen/stream.m3u', site:'wnur.org' }, */
+/* { id:'whpk', name:'WHPK 88.5', freq:'88.5 FM', city:'Chicago', state:'IL', org:'University of Chicago', genre:'Freeform · Jazz', tags:['college','freeform','jazz','midwest','chicago'], url:'https://whpk.uchicago.edu:8000/whpk.mp3', site:'whpk.uchicago.edu' }, */
+{ id:'wluw', name:'WLUW 88.7', freq:'88.7 FM', city:'Chicago', state:'IL', org:'Loyola University Chicago', genre:'Eclectic', tags:['college','eclectic','midwest','chicago'], url:'https://ice26.securenetsystems.net/WLUW', site:'wluw.org' },
+{ id:'wbez', name:'WBEZ 91.5', freq:'91.5 FM', city:'Chicago', state:'IL', org:'Chicago Public Media', genre:'Public Radio · NPR · News', tags:['public','npr','news','midwest','chicago'], url:'https://stream.wbez.org/wbez128.mp3', site:'wbez.org' },
+{ id:'wxrt', name:'WXRT 93.1', freq:'93.1 FM', city:'Chicago', state:'IL', org:'Audacy', genre:'Eclectic Rock · AAA', tags:['public','indie','rock','midwest','chicago'], url:'https://playerservices.streamtheworld.com/api/livestream-redirect/WXRTFM.mp3', site:'wxrt.com' },
+{ id:'wdbm', name:'WDBM 88.9', freq:'88.9 FM', city:'East Lansing', state:'MI', org:'Michigan State University', genre:'Alternative · Freeform', tags:['college','indie','midwest'], url:'https://play.impact89fm.org:8000/impact89fm', site:'impactradio.fm' },
+{ id:'wcbn', name:'WCBN 88.3', freq:'88.3 FM', city:'Ann Arbor', state:'MI', org:'University of Michigan', genre:'Freeform', tags:['college','freeform','midwest'], url:'http://floyd.wcbn.org:8000/wcbn-hi.mp3', site:'wcbn.org' },
+{ id:'widr', name:'WIDR 89.1', freq:'89.1 FM', city:'Kalamazoo', state:'MI', org:'Western Michigan University', genre:'Freeform', tags:['college','freeform','midwest'], url:'http://widrfm.net/stream', site:'widr.org' },
+{ id:'wdet', name:'WDET 101.9', freq:'101.9 FM', city:'Detroit', state:'MI', org:'Wayne State University', genre:'Public Radio · NPR · Jazz', tags:['public','npr','jazz','midwest'], url:'https://playerservices.streamtheworld.com/api/livestream-redirect/WDETFM.mp3', site:'wdet.org' },
+/* { id:'wcbn2', name:'WEMU 89.1', freq:'89.1 FM', city:'Ypsilanti', state:'MI', org:'Eastern Michigan University', genre:'Jazz · Blues · Public', tags:['college','public','jazz','blues','midwest'], url:'https://playerservices.streamtheworld.com/api/livestream-redirect/WEMUFM.mp3', site:'wemu.org' }, */
+/* { id:'kmnr', name:'KMNR 89.7', freq:'89.7 FM', city:'Rolla', state:'MO', org:'Missouri S&T', genre:'Freeform', tags:['college','freeform','midwest'], url:'https://kmnr.mst.edu:8000/kmnr.mp3', site:'kmnr.mst.edu' }, */
+/* { id:'kwur', name:'KWUR 90.3', freq:'90.3 FM', city:'St. Louis', state:'MO', org:'Washington University', genre:'Freeform', tags:['college','freeform','midwest'], url:'https://kwur.wustl.edu:8000/kwur.mp3', site:'kwur.wustl.edu' }, */
+{ id:'kcou', name:'KCOU 88.1', freq:'88.1 FM', city:'Columbia', state:'MO', org:'University of Missouri', genre:'Alternative · Rock', tags:['college','rock','midwest'], url:'https://audio-edge-es6pf.mia.g.radiomast.io/3237c6cc-e87d-480d-a261-33a35f2c44c0', site:'kcou.fm' },
+/* { id:'kure', name:'KURE 88.5', freq:'88.5 FM', city:'Ames', state:'IA', org:'Iowa State University', genre:'Alternative · Eclectic', tags:['college','indie','midwest'], url:'https://kure.stuorg.iastate.edu:8000/kure.mp3', site:'kure.stuorg.iastate.edu' }, */
+/* { id:'krui', name:'KRUI 89.7', freq:'89.7 FM', city:'Iowa City', state:'IA', org:'University of Iowa', genre:'Freeform', tags:['college','freeform','midwest'], url:'http://krui.student-services.uiowa.edu:8000/listen', site:'krui.iowa.edu' }, */
+/* { id:'kuom', name:'KUOM 770', freq:'770 AM', city:'Minneapolis', state:'MN', org:'University of Minnesota', genre:'Eclectic · Freeform', tags:['college','freeform','midwest'], url:'https://radiok.broadcasttool.stream/play_256', site:'radiok.org' }, */
+/* { id:'krlx', name:'KRLX 88.1', freq:'88.1 FM', city:'Northfield', state:'MN', org:'Carleton College', genre:'Eclectic', tags:['college','eclectic','midwest'], url:'https://krlx.carleton.edu:8000/stream.mp3', site:'krlx.carleton.edu' }, */
+{ id:'wmcn', name:'WMCN 91.7', freq:'91.7 FM', city:'Saint Paul', state:'MN', org:'Macalester College', genre:'Freeform', tags:['college','freeform','midwest'], url:'https://audio-edge-vqwx4.yyz.g.radiomast.io/0786c562-432d-4d2b-a4b6-fda1a2f60cf7', site:'wmcn.macalester.edu' },
+{ id:'mpr', name:'MPR News 91.1', freq:'91.1 FM', city:'Minneapolis', state:'MN', org:'Minnesota Public Radio', genre:'Public Radio · NPR · News', tags:['public','npr','news','midwest'], url:'https://nis.stream.publicradio.org/nis.mp3', site:'mprnews.org' },
+{ id:'kjhk', name:'KJHK 90.7', freq:'90.7 FM', city:'Lawrence', state:'KS', org:'University of Kansas', genre:'Freeform · Eclectic', tags:['college','freeform','midwest'], url:'https://streamingv2.shoutcast.com/kjhk', site:'kjhk.org' },
+/* { id:'ksdb', name:'KSDB 91.9', freq:'91.9 FM', city:'Manhattan', state:'KS', org:'Kansas State University', genre:'Alternative', tags:['college','indie','midwest'], url:'https://ksdb.ksu.edu:8000/stream.mp3', site:'ksdb.ksu.edu' }, */
+{ id:'kglt', name:'KGLT 91.9', freq:'91.9 FM', city:'Bozeman', state:'MT', org:'Montana State University', genre:'Eclectic · Freeform', tags:['college','freeform','west'], url:'http://shoutcast.kglt.net:8000/;', site:'kglt.net' },
+/* { id:'kbga', name:'KBGA 89.9', freq:'89.9 FM', city:'Missoula', state:'MT', org:'University of Montana', genre:'Eclectic', tags:['college','eclectic','west'], url:'https://kbga.umt.edu:8000/kbga.mp3', site:'kbga.umt.edu' }, */
+{ id:'kzum', name:'KZUM 89.3', freq:'89.3 FM', city:'Lincoln', state:'NE', org:'Community Radio', genre:'Community · Eclectic', tags:['community','eclectic','midwest'], url:'http://us4.internet-radio.com:8030/stream', site:'kzum.org' },
+{ id:'krnu', name:'KRNU 90.3', freq:'90.3 FM', city:'Lincoln', state:'NE', org:'University of Nebraska', genre:'Freeform', tags:['college','freeform','midwest'], url:'https://s8.yesstreaming.net:17004/krnu', site:'krnu.unl.edu' },
+
+// ══ TEXAS / SOUTHWEST ══
+/* { id:'kvrx', name:'KVRX 91.7', freq:'91.7 FM', city:'Austin', state:'TX', org:'UT Austin', genre:'Freeform · Alternative', tags:['college','freeform','texas'], url:'https://kvrx.org/now_playing/stream', site:'kvrx.org' }, */
+{ id:'kut', name:'KUT 90.5', freq:'90.5 FM', city:'Austin', state:'TX', org:'UT Austin', genre:'Public Radio · NPR · Music', tags:['public','npr','news','texas'], url:'https://streams.kut.org/4426_56', site:'kut.org' },
+{ id:'kutx', name:'KUTX 98.9', freq:'98.9 FM', city:'Austin', state:'TX', org:'UT Austin', genre:'Music · AAA · Public', tags:['public','indie','texas'], url:'https://streams.kut.org/4428_192.mp3', site:'kutx.org' },
+/* { id:'ktru', name:'KTRU 96.1', freq:'96.1 FM', city:'Houston', state:'TX', org:'Rice University', genre:'Freeform', tags:['college','freeform','texas'], url:'https://ktru.org:8000/ktru.mp3', site:'ktru.org' }, */
+/* { id:'kasc', name:'KASC', freq:'Web', city:'Tempe', state:'AZ', org:'ASU', genre:'Alternative · Rock', tags:['college','rock','southwest'], url:'https://kasc.asu.edu:8000/stream.mp3', site:'thesundevils.com' }, */
+{ id:'kjzz', name:'KJZZ 91.5', freq:'91.5 FM', city:'Phoenix', state:'AZ', org:'Rio Salado College', genre:'Jazz · Public Radio', tags:['public','jazz','southwest'], url:'http://stream.kjzz.org/kjzz_mp3_128', site:'kjzz.org' },
+/* { id:'kawc', name:'KAWC 88.9', freq:'88.9 FM', city:'Yuma', state:'AZ', org:'Arizona Western College', genre:'Public Radio', tags:['college','public','southwest'], url:'https://kawc.org:8000/stream.mp3', site:'kawc.org' }, */
+/* { id:'krux', name:'KRUX 91.5', freq:'91.5 FM', city:'Las Cruces', state:'NM', org:'NMSU', genre:'Freeform', tags:['college','freeform','southwest'], url:'https://krux.nmsu.edu:8000/krux.mp3', site:'krux.nmsu.edu' }, */
+/* { id:'kunm', name:'KUNM 89.9', freq:'89.9 FM', city:'Albuquerque', state:'NM', org:'UNM', genre:'Public Radio · World', tags:['public','community','southwest'], url:'https://playerservices.streamtheworld.com/api/livestream-redirect/KUNMFM_128.mp3', site:'kunm.org' }, */
+
+// ══ CALIFORNIA ══
+{ id:'kexp_la', name:'KCRW 89.9', freq:'89.9 FM', city:'Santa Monica', state:'CA', org:'Santa Monica College', genre:'Music · News · Public', tags:['public','indie','news','california','los angeles'], url:'http://streams.kcrw.com/kcrw_mp3', site:'kcrw.com' },
+{ id:'kalx', name:'KALX 90.7', freq:'90.7 FM', city:'Berkeley', state:'CA', org:'UC Berkeley', genre:'Freeform · Eclectic', tags:['college','freeform','california','bay area'], url:'https://stream.kalx.berkeley.edu:8443/kalx-128.mp3', site:'kalx.berkeley.edu' },
+{ id:'kfjc', name:'KFJC 89.7', freq:'89.7 FM', city:'Los Altos Hills', state:'CA', org:'Foothill-De Anza CC', genre:'Freeform', tags:['college','freeform','california','bay area'], url:'http://netcast.kfjc.org/kfjc-320k-aac', site:'kfjc.org' },
+{ id:'kzsc', name:'KZSC 88.1', freq:'88.1 FM', city:'Santa Cruz', state:'CA', org:'UC Santa Cruz', genre:'Freeform · Eclectic', tags:['college','freeform','california','bay area'], url:'https://kzscfms1-geckohost.radioca.st/kzschigh', site:'kzsc.org' },
+{ id:'kzsu', name:'KZSU 90.1', freq:'90.1 FM', city:'Stanford', state:'CA', org:'Stanford University', genre:'Freeform · Experimental', tags:['college','freeform','california','bay area'], url:'http://kzsu-streams.stanford.edu/kzsu-1-256.mp3', site:'kzsu.stanford.edu' },
+{ id:'kspc', name:'KSPC 88.7', freq:'88.7 FM', city:'Claremont', state:'CA', org:'Claremont Colleges', genre:'Freeform · Eclectic', tags:['college','freeform','california','los angeles'], url:'https://kspc.radioca.st/stream', site:'kspc.org' },
+{ id:'kxlu', name:'KXLU 88.9', freq:'88.9 FM', city:'Los Angeles', state:'CA', org:'Loyola Marymount University', genre:'Freeform · Punk', tags:['college','freeform','california','los angeles'], url:'http://kxlu.streamguys1.com/kxlu-hi', site:'kxlu.com' },
+{ id:'kdvs', name:'KDVS 90.3', freq:'90.3 FM', city:'Davis', state:'CA', org:'UC Davis', genre:'Freeform', tags:['college','freeform','california','bay area'], url:'https://listen.kdvs.org/stream', site:'kdvs.org' },
+{ id:'kuci', name:'KUCI 88.9', freq:'88.9 FM', city:'Irvine', state:'CA', org:'UC Irvine', genre:'Freeform', tags:['college','freeform','california','los angeles'], url:'http://streamer.kuci.org:8000/high', site:'kuci.org' },
+/* { id:'kucr', name:'KUCR 88.3', freq:'88.3 FM', city:'Riverside', state:'CA', org:'UC Riverside', genre:'Freeform', tags:['college','freeform','california','los angeles'], url:'https://kucr.org:8000/kucr.mp3', site:'kucr.org' }, */
+{ id:'kcsb', name:'KCSB 91.9', freq:'91.9 FM', city:'Santa Barbara', state:'CA', org:'UC Santa Barbara', genre:'Freeform', tags:['college','freeform','california'], url:'https://kcsb.streamguys1.com/live', site:'kcsb.org' },
+{ id:'ksjs', name:'KSJS 90.5', freq:'90.5 FM', city:'San Jose', state:'CA', org:'San Jose State University', genre:'Freeform · Jazz', tags:['college','jazz','california','bay area'], url:'http://streaming.ksjs.sjsu.edu:8000/live', site:'ksjs.org' },
+{ id:'kcpr', name:'KCPR 91.3', freq:'91.3 FM', city:'San Luis Obispo', state:'CA', org:'Cal Poly SLO', genre:'Eclectic', tags:['college','eclectic','california'], url:'https://ice9.securenetsystems.net/KCPR1', site:'kcpr.org' },
+/* { id:'kkjz', name:'KKJZ 88.1', freq:'88.1 FM', city:'Long Beach', state:'CA', org:'Cal State Long Beach', genre:'Jazz · Blues', tags:['college','public','jazz','california','los angeles'], url:'https://kkjz.streamguys1.com/kkjz-128.mp3', site:'kkjz.org' }, */
+{ id:'kqed', name:'KQED 88.5', freq:'88.5 FM', city:'San Francisco', state:'CA', org:'KQED', genre:'Public Radio · NPR · News', tags:['public','npr','news','california','bay area'], url:'https://streams.kqed.org/kqedradio', site:'kqed.org' },
+/* { id:'kpcc', name:'LAist 89.3', freq:'89.3 FM', city:'Pasadena', state:'CA', org:'Pasadena City College', genre:'Public Radio · NPR · News', tags:['public','npr','news','california','los angeles'], url:'https://live.amperwave.net/direct/southerncalipr-kpccfmmp3-imc.mp3', site:'laist.com' }, */
+{ id:'kpbs', name:'KPBS 89.5', freq:'89.5 FM', city:'San Diego', state:'CA', org:'SDSU', genre:'Public Radio · NPR · News', tags:['public','npr','news','california'], url:'https://playerservices.streamtheworld.com/api/livestream-redirect/KPBSFM.mp3', site:'kpbs.org' },
+
+// ══ PACIFIC NORTHWEST ══
+{ id:'kexp', name:'KEXP 90.3', freq:'90.3 FM', city:'Seattle', state:'WA', org:'University of Washington', genre:'Indie · Alternative · Public', tags:['college','public','indie','pacific northwest','seattle'], url:'https://kexp-mp3-128.streamguys1.com/kexp128.mp3', site:'kexp.org' },
+/* { id:'kuow', name:'KUOW 94.9', freq:'94.9 FM', city:'Seattle', state:'WA', org:'University of Washington', genre:'Public Radio · NPR · News', tags:['public','npr','news','pacific northwest','seattle'], url:'https://playerservices.streamtheworld.com/api/livestream-redirect/KUOWFM_HIGH_MP3.mp3', site:'kuow.org' }, */
+{ id:'kplu', name:'KNKX 88.5', freq:'88.5 FM', city:'Tacoma', state:'WA', org:'Pacific Lutheran University', genre:'Jazz · Public Radio', tags:['public','jazz','pacific northwest'], url:'https://knkx-live-a.edge.audiocdn.com/6284_128k', site:'knkx.org' },
+/* { id:'kaos', name:'KAOS 89.3', freq:'89.3 FM', city:'Olympia', state:'WA', org:'Evergreen State College', genre:'Community · Eclectic', tags:['college','community','eclectic','pacific northwest'], url:'https://kaosradio.org:8000/kaos.mp3', site:'kaosradio.org' }, */
+/* { id:'kbvr', name:'KBVR 88.7', freq:'88.7 FM', city:'Corvallis', state:'OR', org:'Oregon State University', genre:'Freeform', tags:['college','freeform','pacific northwest'], url:'https://node-10.zeno.fm/9ympbz9nfa0uv', site:'kbvr.oregonstate.edu' }, */
+{ id:'kwva', name:'KWVA 88.1', freq:'88.1 FM', city:'Eugene', state:'OR', org:'University of Oregon', genre:'Freeform · Eclectic', tags:['college','freeform','pacific northwest'], url:'http://kwvaradio.uoregon.edu:8000/;', site:'kwva.uoregon.edu' },
+/* { id:'kmhd', name:'KMHD 89.1', freq:'89.1 FM', city:'Portland', state:'OR', org:'Mt. Hood CC', genre:'Jazz', tags:['college','public','jazz','pacific northwest'], url:'https://kmhd.streamguys1.com/kmhd-128.mp3', site:'kmhd.org' }, */
+/* { id:'kopb', name:'OPB 91.5', freq:'91.5 FM', city:'Portland', state:'OR', org:'Oregon Public Broadcasting', genre:'Public Radio · NPR · News', tags:['public','npr','news','pacific northwest'], url:'https://opb.streamguys1.com/opbfm.mp3', site:'opb.org' }, */
+
+// ══ MOUNTAIN WEST ══
+{ id:'kcsu', name:'KCSU 90.5', freq:'90.5 FM', city:'Fort Collins', state:'CO', org:'Colorado State University', genre:'Alternative · Eclectic', tags:['college','indie','mountain west'], url:'https://listen.kcsufm.com/stream', site:'kcsufm.com' },
+/* { id:'kvcu', name:'KVCU 1190', freq:'1190 AM', city:'Boulder', state:'CO', org:'CU Boulder', genre:'Freeform', tags:['college','freeform','mountain west'], url:'https://kvcu.colorado.edu:8000/stream.mp3', site:'radio1190.org' }, */
+{ id:'kdur', name:'KDUR 91.9', freq:'91.9 FM', city:'Durango', state:'CO', org:'Fort Lewis College', genre:'Eclectic · Community', tags:['college','community','mountain west'], url:'http://kdurradio.fortlewis.edu/stream', site:'kdur.org' },
+/* { id:'kcfr', name:'CPR 90.1', freq:'90.1 FM', city:'Denver', state:'CO', org:'Colorado Public Radio', genre:'Public Radio · NPR · News · Classical', tags:['public','npr','news','classical','mountain west'], url:'https://cpr.streamguys1.com/cpr-news128.mp3', site:'cpr.org' }, */
+{ id:'kuer', name:'KUER 90.1', freq:'90.1 FM', city:'Salt Lake City', state:'UT', org:'University of Utah', genre:'Public Radio · NPR', tags:['public','npr','news','mountain west'], url:'https://playerservices.streamtheworld.com/api/livestream-redirect/KUERFM.mp3', site:'kuer.org' },
+{ id:'krcl', name:'KRCL 90.9', freq:'90.9 FM', city:'Salt Lake City', state:'UT', org:'KRCL', genre:'Community · Eclectic', tags:['community','eclectic','mountain west'], url:'http://stream.xmission.com/krcl-high', site:'krcl.org' },
+
+// ══ UPPER MIDWEST / GREAT PLAINS ══
+{ id:'wort', name:'WORT 89.9', freq:'89.9 FM', city:'Madison', state:'WI', org:'WORT Community Radio', genre:'Community · Eclectic', tags:['community','eclectic','midwest'], url:'https://wortcast01.wortfm.org:8443/high.mp3', site:'wort-fm.org' },
+{ id:'wsum', name:'WSUM 91.7', freq:'91.7 FM', city:'Madison', state:'WI', org:'UW-Madison', genre:'Alternative', tags:['college','indie','midwest'], url:'https://ice23.securenetsystems.net/WSUMFM', site:'wsum.org' },
+/* { id:'wmse', name:'WMSE 91.7', freq:'91.7 FM', city:'Milwaukee', state:'WI', org:'Milwaukee School of Engineering', genre:'Eclectic · Freeform', tags:['college','freeform','midwest'], url:'https://wmse.org:8000/wmse.mp3', site:'wmse.org' }, */
+{ id:'wpr', name:'WPR 88.3', freq:'88.3 FM', city:'Madison', state:'WI', org:'Wisconsin Public Radio', genre:'Public Radio · NPR', tags:['public','npr','news','midwest'], url:'https://playerservices.streamtheworld.com/api/livestream-redirect/WPRFM.mp3', site:'wpr.org' },
+{ id:'wvlp', name:'WVLP 91.7', freq:'91.7 FM', city:'Valparaiso', state:'IN', org:'Valparaiso University', genre:'Eclectic', tags:['college','eclectic','midwest'], url:'https://wvur.valpo.edu:8000/stream.mp3', site:'wvur.valpo.edu' },
+{ id:'wgre', name:'WGRE 91.5', freq:'91.5 FM', city:'Greencastle', state:'IN', org:'DePauw University', genre:'Eclectic', tags:['college','eclectic','midwest'], url:'https://wgre.depauw.edu:8000/wgre.mp3', site:'wgre.depauw.edu' },
+{ id:'wfiu', name:'WFIU 103.7', freq:'103.7 FM', city:'Bloomington', state:'IN', org:'Indiana University', genre:'Public Radio · Classical · Jazz', tags:['public','classical','jazz','midwest'], url:'https://playerservices.streamtheworld.com/api/livestream-redirect/WFIUFM.mp3', site:'indianapublicmedia.org' },
+{ id:'wvbr2', name:'WCRD 91.3', freq:'91.3 FM', city:'Muncie', state:'IN', org:'Ball State University', genre:'Alternative', tags:['college','indie','midwest'], url:'https://wcrd.bsu.edu:8000/wcrd.mp3', site:'wcrd.bsu.edu' },
+
+// ══ APPALACHIA / OHIO VALLEY ══
+{ id:'woub', name:'WOUB 91.3', freq:'91.3 FM', city:'Athens', state:'OH', org:'Ohio University', genre:'Public Radio · Classical · Jazz', tags:['public','classical','jazz','midwest'], url:'http://26423.live.streamtheworld.com/WOUBFM_SC', site:'woub.org' },
+{ id:'wksu', name:'WKSU 89.7', freq:'89.7 FM', city:'Kent', state:'OH', org:'Kent State University', genre:'Public Radio · NPR', tags:['public','npr','news','midwest'], url:'https://stream.wksu.org/wksu3.mp3.128', site:'wksu.org' },
+{ id:'wbgu', name:'WBSU 88.1', freq:'88.1 FM', city:'Bowling Green', state:'OH', org:'BGSU', genre:'Alternative', tags:['college','indie','midwest'], url:'https://bgsu.edu/stream', site:'bgsu.edu' },
+{ id:'wudr', name:'WUDR 99.5', freq:'99.5 FM', city:'Dayton', state:'OH', org:'University of Dayton', genre:'Alternative', tags:['college','indie','midwest'], url:'https://wudr.udayton.edu:8000/stream.mp3', site:'wudr.udayton.edu' },
+{ id:'wcsb', name:'WCSB 89.3', freq:'89.3 FM', city:'Cleveland', state:'OH', org:'Cleveland State University', genre:'Freeform · Community', tags:['college','freeform','midwest'], url:'https://wcsb.org:8000/wcsb.mp3', site:'wcsb.org' },
+{ id:'wruw', name:'WRUW 91.1', freq:'91.1 FM', city:'Cleveland', state:'OH', org:'Case Western Reserve', genre:'Freeform', tags:['college','freeform','midwest'], url:'https://wruw.org:8000/wruw.mp3', site:'wruw.org' },
+{ id:'wyso', name:'WYSO 91.3', freq:'91.3 FM', city:'Yellow Springs', state:'OH', org:'Antioch College', genre:'Public Radio · Eclectic', tags:['public','community','midwest'], url:'http://26423.live.streamtheworld.com/WYSOFM_SC', site:'wyso.org' },
+{ id:'wmul', name:'WMUL 88.1', freq:'88.1 FM', city:'Huntington', state:'WV', org:'Marshall University', genre:'Alternative', tags:['college','indie','southeast'], url:'https://wmul.marshall.edu:8000/stream.mp3', site:'wmul.marshall.edu' },
+
+// ══ SOUTH CENTRAL ══
+{ id:'kxua', name:'KXUA 88.3', freq:'88.3 FM', city:'Fayetteville', state:'AR', org:'University of Arkansas', genre:'Alternative · Freeform', tags:['college','freeform','south'], url:'https://listen.kxua.com/stream', site:'kxua.uark.edu' },
+{ id:'khdx', name:'KHDX 93.1', freq:'93.1 FM', city:'Conway', state:'AR', org:'Hendrix College', genre:'Eclectic', tags:['college','eclectic','south'], url:'https://khdx.hendrix.edu:8000/khdx.mp3', site:'khdx.hendrix.edu' },
+{ id:'wvvs2', name:'WUMC 90.7', freq:'90.7 FM', city:'Nashville', state:'TN', org:'Vanderbilt / WMOT', genre:'Jazz · Blues · Public', tags:['public','jazz','blues','south'], url:'https://wmot.streamguys1.com/wmot-128.mp3', site:'wmot.org' },
+{ id:'wknx', name:'WUTK 90.3', freq:'90.3 FM', city:'Knoxville', state:'TN', org:'UT Knoxville', genre:'Alternative', tags:['college','indie','south'], url:'https://wutk.utk.edu:8000/stream.mp3', site:'wutkradio.com' },
+{ id:'wevl', name:'WEVL 89.9', freq:'89.9 FM', city:'Memphis', state:'TN', org:'WEVL Community Radio', genre:'Blues · Community', tags:['community','blues','jazz','south'], url:'http://peace.str3am.com:6030/;.mp3', site:'wevl.org' },
+{ id:'wnrn', name:'WNRN 91.9', freq:'91.9 FM', city:'Charlottesville', state:'VA', org:'WNRN Community Radio', genre:'Community · Indie', tags:['community','indie','mid-atlantic'], url:'http://22213.live.streamtheworld.com/WNRNFM_128_SC', site:'wnrn.org' },
+{ id:'wdce', name:'WDCE 90.1', freq:'90.1 FM', city:'Richmond', state:'VA', org:'University of Richmond', genre:'Eclectic', tags:['college','eclectic','mid-atlantic'], url:'https://streaming.live365.com/a39711', site:'wdce.richmond.edu' },
+{ id:'wuvt', name:'WUVT 90.7', freq:'90.7 FM', city:'Blacksburg', state:'VA', org:'Virginia Tech', genre:'Freeform', tags:['college','freeform','mid-atlantic'], url:'http://engine.wuvt.vt.edu:8000/wuvt.ogg', site:'wuvt.vt.edu' },
+{ id:'wlur2', name:'WLUR 91.5', freq:'91.5 FM', city:'Lexington', state:'VA', org:'Washington & Lee University', genre:'Eclectic', tags:['college','eclectic','mid-atlantic'], url:'http://perseus.shoutca.st:9045/stream', site:'wlur.wlu.edu' },
+
+// ══ GREAT LAKES ══
+{ id:'wdet2', name:'WGVU 88.5', freq:'88.5 FM', city:'Grand Rapids', state:'MI', org:'Grand Valley State University', genre:'Public Radio · Classical', tags:['public','classical','midwest'], url:'https://playerservices.streamtheworld.com/api/livestream-redirect/WGVUFM.mp3', site:'wgvu.org' },
+{ id:'wnmu', name:'WNMU 90.1', freq:'90.1 FM', city:'Marquette', state:'MI', org:'Northern Michigan University', genre:'Public Radio · Classical · Jazz', tags:['public','classical','jazz','midwest'], url:'https://playerservices.streamtheworld.com/api/livestream-redirect/WNMUFM.mp3', site:'wnmufm.org' },
+{ id:'wgte', name:'WGTE 91.3', freq:'91.3 FM', city:'Toledo', state:'OH', org:'WGTE Public Media', genre:'Public Radio · Classical', tags:['public','classical','midwest'], url:'https://playerservices.streamtheworld.com/api/livestream-redirect/WGTEFM.mp3', site:'wgte.org' },
+
+// ══ ALASKA / HAWAII ══
+{ id:'krua', name:'KRUA 88.1', freq:'88.1 FM', city:'Anchorage', state:'AK', org:'UAA', genre:'Freeform', tags:['college','freeform'], url:'https://krua.uaa.alaska.edu:8000/krua.mp3', site:'krua.org' },
+{ id:'ktuh', name:'KTUH 90.1', freq:'90.1 FM', city:'Honolulu', state:'HI', org:'UH Manoa', genre:'Eclectic · World', tags:['college','eclectic','world'], url:'https://stream.ktuh.org:8001/stream', site:'ktuh.org' },
+
+];
+
+// ─────────────────────────────────────────────────────────────
+// State
+// ─────────────────────────────────────────────────────────────
+const FILTERS = [
+  { label:'All',        fn: () => true },
+  { label:'College',    fn: s => s.tags.includes('college') },
+  { label:'Public/NPR', fn: s => s.tags.includes('public') || s.tags.includes('npr') },
+  { label:'Freeform',   fn: s => s.tags.includes('freeform') },
+  { label:'Community',  fn: s => s.tags.includes('community') },
+  { label:'Jazz',       fn: s => s.tags.includes('jazz') },
+  { label:'Classical',  fn: s => s.tags.includes('classical') },
+  { label:'Indie/Alt',  fn: s => s.tags.includes('indie') },
+  { label:'News',       fn: s => s.tags.includes('news') },
+  // metro
+  { label:'New York',   fn: s => s.tags.includes('new york') || s.tags.includes('tri-state') },
+  { label:'Boston',     fn: s => s.tags.includes('boston') || s.tags.includes('new england') },
+  { label:'Chicago',    fn: s => s.tags.includes('chicago') },
+  { label:'Bay Area',   fn: s => s.tags.includes('bay area') },
+  { label:'LA',         fn: s => s.tags.includes('los angeles') },
+  { label:'Seattle/PDX',fn: s => s.tags.includes('pacific northwest') || s.tags.includes('seattle') },
+  { label:'SE/South',   fn: s => s.tags.includes('southeast') || s.tags.includes('south') },
+  { label:'Midwest',    fn: s => s.tags.includes('midwest') },
+  { label:'Southwest',  fn: s => s.tags.includes('southwest') },
+  { label:'Mountain',   fn: s => s.tags.includes('mountain west') },
+];
+
+let state = {
+  tab: 'browse',       // 'browse' | 'favs'
+  filterIdx: 0,
+  searchQuery: '',
+  searchMode: false,
+  currentId: null,
+  playing: false,
+  tuning: false,
+  volume: 0.85,
+  favs: [],
+};
+
+try { state.favs = JSON.parse(localStorage.getItem('lotd-favs') || localStorage.getItem('freeform-favs') || '[]'); } catch(e) {}
+
+// Merge any station IDs from URL hash: #favs=wkcr,wfmu,kalx
+(function() {
+  try {
+    const m = location.hash.match(/[#&]favs=([^&]+)/);
+    if (m) {
+      const ids = m[1].split(',').filter(id => DB.some(s => s.id === id));
+      ids.forEach(id => { if (!state.favs.includes(id)) state.favs.push(id); });
+      try { localStorage.setItem('lotd-favs', JSON.stringify(state.favs)); } catch(e) {}
+      history.replaceState(null, '', location.pathname + location.search);
+    }
+  } catch(e) {}
+})();
+
+const audio = document.getElementById('audio');
+audio.volume = state.volume;
+let tuneTimer = null;
+let tuningRaf = null;
+
+// ─────────────────────────────────────────────────────────────
+// Tuning needle animation
+// ─────────────────────────────────────────────────────────────
+let needleDir = 1, needlePos = 20;
+function animateNeedle() {
+  needlePos += needleDir * (1.5 + Math.random() * 2.5);
+  if (needlePos > 80) needleDir = -1;
+  if (needlePos < 15) needleDir = 1;
+  const needle = document.getElementById('tuning-needle');
+  if (needle) needle.style.left = needlePos + '%';
+  if (state.tuning) tuningRaf = requestAnimationFrame(animateNeedle);
+}
+
+// ─────────────────────────────────────────────────────────────
+// Build filter chips
+// ─────────────────────────────────────────────────────────────
+function buildFilters() {
+  const row = document.getElementById('filter-row');
+  row.innerHTML = '';
+  FILTERS.forEach((f, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-chip' + (i === state.filterIdx ? ' active' : '');
+    btn.textContent = f.label;
+    btn.onclick = () => { state.filterIdx = i; state.searchMode = false; render(); };
+    row.appendChild(btn);
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+// Render station list
+// ─────────────────────────────────────────────────────────────
+function getDisplayList() {
+  let list = DB;
+  if (state.tab === 'favs') {
+    list = DB.filter(s => state.favs.includes(s.id));
+  } else if (state.searchMode && state.searchQuery.trim()) {
+    const q = state.searchQuery.trim().toLowerCase();
+    list = DB.filter(s =>
+      s.name.toLowerCase().includes(q) ||
+      s.city.toLowerCase().includes(q) ||
+      s.state.toLowerCase().includes(q) ||
+      s.org.toLowerCase().includes(q) ||
+      s.genre.toLowerCase().includes(q) ||
+      s.tags.some(t => t.includes(q))
+    );
+  } else {
+    list = DB.filter(FILTERS[state.filterIdx].fn);
+    // Also apply search filter if typed but not submitted
+    const q = state.searchQuery.trim().toLowerCase();
+    if (q) list = list.filter(s =>
+      s.name.toLowerCase().includes(q) ||
+      s.city.toLowerCase().includes(q) ||
+      s.org.toLowerCase().includes(q) ||
+      s.genre.toLowerCase().includes(q)
+    );
+  }
+  return list;
+}
+
+function render() {
+  // tabs
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === state.tab);
+  });
+  document.getElementById('fav-count').textContent = state.favs.length;
+
+  // filter row (only in browse + not search mode)
+  const filterRow = document.getElementById('filter-row');
+  filterRow.style.display = (state.tab === 'browse' && !state.searchMode) ? 'flex' : 'none';
+  buildFilters();
+
+  const list = getDisplayList();
+  const listEl = document.getElementById('station-list');
+  const emptyEl = document.getElementById('empty');
+  const loadingEl = document.getElementById('loading');
+
+  loadingEl.style.display = 'none';
+  if (list.length === 0) {
+    listEl.innerHTML = '';
+    emptyEl.style.display = 'block';
+    if (state.tab === 'favs') {
+      document.getElementById('empty-label').textContent = 'NO SAVED STATIONS';
+      document.getElementById('empty-hint').textContent = 'Star any station to save it here.';
+    } else {
+      document.getElementById('empty-label').textContent = 'NO STATIONS FOUND';
+      document.getElementById('empty-hint').textContent = 'Try a different search term or filter.';
+    }
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  listEl.innerHTML = '';
+  list.forEach(s => {
+    const isActive = state.currentId === s.id;
+    const isFav = state.favs.includes(s.id);
+    const card = document.createElement('div');
+    card.className = 'station-card' + (isActive ? ' active' : '');
+    card.innerHTML = `
+      <div class="card-top">
+        <div class="card-left">
+          <div class="card-name-row">
+            ${isActive ? '<span class="on-air-badge">ON AIR</span>' : ''}
+            ${isActive && state.playing ? `<span class="vu-meter">${[5,9,6,11,7,8].map((h,i) => `<span class="vu-bar" style="height:${h}px;animation-delay:${i*0.07}s"></span>`).join('')}</span>` : ''}
+            <span class="card-name">${s.name}</span>
+          </div>
+          <div class="card-meta">${s.org} · ${s.city}, ${s.state}</div>
+          <div class="card-genre">${s.genre}</div>
+        </div>
+        <button class="fav-btn ${isFav ? 'saved' : ''}" data-id="${s.id}">${isFav ? '★' : '☆'}</button>
+      </div>
+    `;
+    card.querySelector('.fav-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleFav(s.id);
+    });
+    card.addEventListener('click', () => tune(s));
+    listEl.appendChild(card);
+  });
+
+  updateNowPlaying();
+}
+
+// ─────────────────────────────────────────────────────────────
+// Tuning / playback
+// ─────────────────────────────────────────────────────────────
+function tune(station) {
+  showStatus('');
+  if (state.currentId === station.id && state.playing) {
+    audio.pause();
+    state.playing = false;
+    render();
+    return;
+  }
+  state.currentId = station.id;
+  state.tuning = true;
+  state.playing = false;
+  clearTimeout(tuneTimer);
+  audio.pause();
+  audio.src = station.url;
+  audio.load();
+  render();
+  startTuningBar();
+  audio.play()
+    .then(() => {
+      state.playing = true;
+      state.tuning = false;
+      stopTuningBar();
+      render();
+    })
+    .catch((err) => {
+      state.tuning = false;
+      stopTuningBar();
+      showStatus(`Couldn't connect to ${station.name}. The stream may be offline or require a different app. Try visiting ${station.site} directly.`, 'error');
+      render();
+    });
+}
+
+function togglePlay() {
+  if (!state.currentId) return;
+  const s = DB.find(x => x.id === state.currentId);
+  if (!s) return;
+  if (state.playing) {
+    audio.pause();
+    state.playing = false;
+    render();
+  } else {
+    tune(s);
+  }
+}
+
+audio.addEventListener('ended', () => { state.playing = false; render(); });
+audio.addEventListener('error', () => {
+  if (!state.currentId) return;
+  const s = DB.find(x => x.id === state.currentId);
+  state.playing = false;
+  state.tuning = false;
+  stopTuningBar();
+  if (s) showStatus(`Stream error for ${s.name}. It may be offline — try visiting ${s.site} to confirm.`, 'error');
+  render();
+});
+
+function startTuningBar() {
+  const bar = document.getElementById('tuning-bar');
+  bar.style.display = 'block';
+  cancelAnimationFrame(tuningRaf);
+  tuningRaf = requestAnimationFrame(animateNeedle);
+}
+function stopTuningBar() {
+  const bar = document.getElementById('tuning-bar');
+  bar.style.display = 'none';
+  cancelAnimationFrame(tuningRaf);
+}
+
+function setVol(v) {
+  state.volume = parseFloat(v);
+  audio.volume = state.volume;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Now Playing bar
+// ─────────────────────────────────────────────────────────────
+function updateNowPlaying() {
+  const bar = document.getElementById('now-playing');
+  const spacer = document.getElementById('np-spacer');
+  if (!state.currentId) {
+    bar.style.display = 'none';
+    spacer.classList.remove('visible');
+    return;
+  }
+  const s = DB.find(x => x.id === state.currentId);
+  if (!s) return;
+  bar.style.display = 'block';
+  spacer.classList.add('visible');
+
+  const btn = document.getElementById('play-stop-btn');
+  btn.textContent = state.playing ? '⏹' : '▶';
+
+  const nameEl = document.getElementById('np-name');
+  nameEl.innerHTML = '';
+  if (state.playing) {
+    const vu = document.createElement('span');
+    vu.className = 'vu-meter';
+    vu.innerHTML = [4,8,5,10,6].map((h,i) => `<span class="vu-bar" style="height:${h}px;animation-delay:${i*0.08}s"></span>`).join('');
+    nameEl.appendChild(vu);
+  }
+  const nameText = document.createTextNode(s.name);
+  nameEl.appendChild(nameText);
+
+  document.getElementById('np-status').textContent =
+    state.tuning ? 'Scanning…' : state.playing ? `● LIVE · ${s.city}, ${s.state}` : `Stopped · ${s.city}, ${s.state}`;
+
+  const link = document.getElementById('np-link');
+  link.textContent = s.site + ' ↗';
+  link.href = 'https://' + s.site;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Favorites + Share
+// ─────────────────────────────────────────────────────────────
+function shareFavs() {
+  if (state.favs.length === 0) { showStatus('No saved stations to share.', 'info'); return; }
+  const url = location.href.split('#')[0] + '#favs=' + state.favs.join(',');
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById('share-btn');
+    btn.textContent = '✓ Copied';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '⤴ Share'; btn.classList.remove('copied'); }, 2000);
+  }).catch(() => {
+    prompt('Copy this link to share your saved stations:', url);
+  });
+}
+
+function toggleFav(id) {
+  if (state.favs.includes(id)) {
+    state.favs = state.favs.filter(x => x !== id);
+  } else {
+    state.favs.push(id);
+  }
+  try { localStorage.setItem('lotd-favs', JSON.stringify(state.favs)); } catch(e) {}
+  render();
+}
+
+// ─────────────────────────────────────────────────────────────
+// Tabs / Search
+// ─────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  state.tab = tab;
+  state.searchMode = false;
+  render();
+}
+
+function doSearch() {
+  const q = document.getElementById('search-input').value.trim();
+  if (!q) return;
+  state.searchQuery = q;
+  state.searchMode = true;
+  state.tab = 'browse';
+  render();
+}
+
+document.getElementById('search-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSearch();
+});
+document.getElementById('search-input').addEventListener('input', e => {
+  state.searchQuery = e.target.value;
+  if (!e.target.value.trim()) { state.searchMode = false; }
+  render();
+});
+
+// ─────────────────────────────────────────────────────────────
+// Status messages
+// ─────────────────────────────────────────────────────────────
+function showStatus(msg, type) {
+  const el = document.getElementById('status-msg');
+  el.textContent = msg;
+  el.className = type || '';
+  el.style.display = msg ? 'block' : 'none';
+}
+
+// ─────────────────────────────────────────────────────────────
+// Boot
+// ─────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
