@@ -229,6 +229,11 @@
     display: flex; align-items: center; gap: 7px;
   }
   #np-status { color: #888; font-family: monospace; font-size: 11px; margin-top: 2px; }
+  #np-meta {
+    display: none; font-size: 11px; color: var(--text-dim); margin-top: 3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-style: italic;
+  }
   #np-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 #np-link { color: #777; font-family: monospace; font-size: 10px; text-decoration: none; }
   #np-link:hover { color: var(--amber); }
@@ -321,6 +326,7 @@
     <div id="np-info">
       <div id="np-name">—</div>
       <div id="np-status">—</div>
+      <div id="np-meta"></div>
     </div>
     <div id="np-right">
       <a id="np-link" href="#" target="_blank" rel="noreferrer"></a>
@@ -566,6 +572,7 @@ let state = {
   playing: false,
   tuning: false,
   favs: [],
+  metaCache: {},
 };
 
 try { state.favs = JSON.parse(localStorage.getItem('lotd-favs') || localStorage.getItem('freeform-favs') || '[]'); } catch(e) {}
@@ -630,7 +637,8 @@ function getDisplayList() {
       s.state.toLowerCase().includes(q) ||
       s.org.toLowerCase().includes(q) ||
       s.genre.toLowerCase().includes(q) ||
-      s.tags.some(t => t.includes(q))
+      s.tags.some(t => t.includes(q)) ||
+      (state.metaCache[s.id] || '').toLowerCase().includes(q)
     );
   } else {
     list = DB.filter(FILTERS[state.filterIdx].fn);
@@ -640,7 +648,8 @@ function getDisplayList() {
       s.name.toLowerCase().includes(q) ||
       s.city.toLowerCase().includes(q) ||
       s.org.toLowerCase().includes(q) ||
-      s.genre.toLowerCase().includes(q)
+      s.genre.toLowerCase().includes(q) ||
+      (state.metaCache[s.id] || '').toLowerCase().includes(q)
     );
   }
   return list;
@@ -712,6 +721,61 @@ function render() {
   updateNowPlaying();
 }
 
+
+// ─────────────────────────────────────────────────────────────
+// Now-playing metadata (fetched while streaming)
+// ─────────────────────────────────────────────────────────────
+const META_API = {
+  kexp: async () => {
+    const d = await fetch('https://api.kexp.org/v2/plays/?format=json&limit=1').then(r => r.json());
+    const p = d.results?.[0];
+    if (!p || p.play_type === 'airbreak') return null;
+    return [p.artist, p.song].filter(Boolean).join(' — ');
+  },
+  kexp_la: async () => { // KCRW
+    const d = await fetch('https://tracklist-api.kcrw.com/Simulcast').then(r => r.json());
+    return [d.artist, d.title].filter(Boolean).join(' — ');
+  },
+};
+
+async function icecastMeta(streamUrl) {
+  const u = new URL(streamUrl);
+  const d = await fetch(u.origin + '/status-json.xsl').then(r => r.json());
+  let src = d?.icestats?.source;
+  if (Array.isArray(src)) src = src[0];
+  return src?.title?.trim() || null;
+}
+
+let metaTimer = null;
+
+async function refreshMeta() {
+  if (!state.playing || !state.currentId) return;
+  const station = DB.find(s => s.id === state.currentId);
+  if (!station) return;
+  let text = null;
+  try {
+    const api = META_API[station.id];
+    text = api ? await api() : await icecastMeta(station.url);
+  } catch(e) {}
+  if (text) state.metaCache[station.id] = text;
+  const el = document.getElementById('np-meta');
+  if (!el) return;
+  el.textContent = text || '';
+  el.style.display = text ? 'block' : 'none';
+}
+
+function startMeta() {
+  clearInterval(metaTimer);
+  refreshMeta();
+  metaTimer = setInterval(refreshMeta, 60000);
+}
+
+function stopMeta() {
+  clearInterval(metaTimer);
+  const el = document.getElementById('np-meta');
+  if (el) { el.textContent = ''; el.style.display = 'none'; }
+}
+
 // ─────────────────────────────────────────────────────────────
 // Tuning / playback
 // ─────────────────────────────────────────────────────────────
@@ -720,6 +784,7 @@ function tune(station) {
   if (state.currentId === station.id && state.playing) {
     audio.pause();
     state.playing = false;
+    stopMeta();
     render();
     return;
   }
@@ -737,6 +802,7 @@ function tune(station) {
       state.playing = true;
       state.tuning = false;
       stopTuningBar();
+      startMeta();
       render();
     })
     .catch((err) => {
@@ -754,19 +820,21 @@ function togglePlay() {
   if (state.playing) {
     audio.pause();
     state.playing = false;
+    stopMeta();
     render();
   } else {
     tune(s);
   }
 }
 
-audio.addEventListener('ended', () => { state.playing = false; render(); });
+audio.addEventListener('ended', () => { state.playing = false; stopMeta(); render(); });
 audio.addEventListener('error', () => {
   if (!state.currentId) return;
   const s = DB.find(x => x.id === state.currentId);
   state.playing = false;
   state.tuning = false;
   stopTuningBar();
+  stopMeta();
   if (s) showStatus(`Stream error for ${s.name}. It may be offline — try visiting ${s.site} to confirm.`, 'error');
   render();
 });
