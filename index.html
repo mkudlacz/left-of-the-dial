@@ -1162,10 +1162,10 @@ async function fetchStationContext(station) {
   try {
     const geo = await fetch(
       'https://geocoding-api.open-meteo.com/v1/search?name=' +
-      encodeURIComponent(station.city + ' ' + station.state) +
-      '&country_code=US&count=1&language=en&format=json'
+      encodeURIComponent(station.city) +
+      '&count=5&language=en&format=json'
     ).then(r => r.json());
-    const loc = geo.results?.[0];
+    const loc = (geo.results || []).find(r => r.country_code === 'US');
     if (!loc) return;
 
     document.getElementById('sp-time').textContent = new Date().toLocaleTimeString('en-US', {
