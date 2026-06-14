@@ -223,15 +223,8 @@
     font-family: monospace; font-size: 9px; letter-spacing: 2px;
     color: rgba(201,162,39,0.55);
   }
-  #np-card { display: flex; gap: 13px; align-items: flex-start; }
-  #np-img {
-    width: 80px; height: 80px; border-radius: 6px; flex-shrink: 0;
-    object-fit: cover; border: 1px solid rgba(255,255,255,0.1);
-    background: #252525; display: none;
-  }
-  #np-img.loaded { display: block; }
-  #np-detail { flex: 1; min-width: 0; }
-  #np-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 2px; }
+  #np-detail { min-width: 0; }
+  #np-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 3px; }
   #np-name {
     color: var(--amber); font-weight: 700; font-size: 15px;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -244,9 +237,7 @@
     display: flex; align-items: center; justify-content: center;
   }
   #np-org  { font-size: 11px; color: var(--text-dim); margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  #np-ctx  { font-size: 11px; color: #888; font-family: monospace; margin-bottom: 3px; display: none; }
-  #np-wiki { font-size: 11px; color: var(--text-dim); line-height: 1.45; margin-bottom: 4px; display: none;
-             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  #np-ctx  { font-size: 11px; color: #888; font-family: monospace; margin-bottom: 4px; display: none; }
   #np-meta { font-size: 11px; color: #999; font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: none; }
   #np-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
   #np-status { color: #555; font-family: monospace; font-size: 10px; }
@@ -348,7 +339,6 @@
     <div id="tuning-label">TUNING…</div>
   </div>
   <div id="np-card">
-    <img id="np-img" src="" alt="">
     <div id="np-detail">
       <div id="np-top">
         <div id="np-name">—</div>
@@ -356,7 +346,6 @@
       </div>
       <div id="np-org">—</div>
       <div id="np-ctx"></div>
-      <div id="np-wiki"></div>
       <div id="np-meta"></div>
       <div id="np-foot">
         <div id="np-status">—</div>
@@ -834,42 +823,14 @@ function clearMediaSession() {
 // ─────────────────────────────────────────────────────────────
 
 function clearEnrichment() {
-  const img = document.getElementById('np-img');
-  img.src = ''; img.classList.remove('loaded');
   const ctx = document.getElementById('np-ctx');
   ctx.textContent = ''; ctx.style.display = 'none';
-  const wiki = document.getElementById('np-wiki');
-  wiki.textContent = ''; wiki.style.display = 'none';
 }
 
 async function enrichStation(station) {
   clearEnrichment();
 
-  // 1. Wikipedia: image + extract
-  const callSigns = [station.id.toUpperCase(), station.id.toUpperCase() + '-FM'];
-  for (const title of callSigns) {
-    try {
-      const d = await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(title)).then(r => r.json());
-      if (d.type === 'standard' || d.type === 'disambiguation') {
-        if (d.thumbnail?.source) {
-          const img = document.getElementById('np-img');
-          img.onload = () => img.classList.add('loaded');
-          img.src = d.thumbnail.source;
-        }
-        if (d.extract) {
-          // First sentence only
-          const sentence = d.extract.split('. ')[0] + '.';
-          const wiki = document.getElementById('np-wiki');
-          wiki.textContent = sentence;
-          wiki.style.display = '-webkit-box';
-          wiki.style.display = 'block';
-        }
-        break;
-      }
-    } catch(e) {}
-  }
-
-  // 2. Geocode → time + weather + sunset
+  // Geocode city → lat/lon + timezone, then weather + sunset
   try {
     const geo = await fetch(
       'https://geocoding-api.open-meteo.com/v1/search?name=' +
@@ -881,9 +842,9 @@ async function enrichStation(station) {
     const tz = loc.timezone;
     const now = new Date();
     const timeStr = now.toLocaleTimeString('en-US', {timeZone: tz, hour: 'numeric', minute: '2-digit', hour12: true});
-    const dayStr = now.toLocaleDateString('en-US', {timeZone: tz, weekday: 'long'});
-    const hour = parseInt(now.toLocaleTimeString('en-US', {timeZone: tz, hour: 'numeric', hour12: false}));
-    const period = hour < 5 ? 'night' : hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : hour < 21 ? 'evening' : 'night';
+    const dayStr  = now.toLocaleDateString('en-US', {timeZone: tz, weekday: 'long'});
+    const hour    = parseInt(now.toLocaleTimeString('en-US', {timeZone: tz, hour: 'numeric', hour12: false}));
+    const period  = hour < 5 ? 'night' : hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : hour < 21 ? 'evening' : 'night';
 
     const wx = await fetch(
       'https://api.open-meteo.com/v1/forecast?latitude=' + loc.latitude +
@@ -892,14 +853,24 @@ async function enrichStation(station) {
       '&temperature_unit=fahrenheit&timezone=auto&forecast_days=1'
     ).then(r => r.json());
     const cur = wx.current;
-    const sunset = wx.daily?.sunset?.[0];
-    const sunsetStr = sunset ? new Date(sunset).toLocaleTimeString('en-US', {timeZone: tz, hour: 'numeric', minute: '2-digit', hour12: true}) : null;
     const wxDesc = WX[cur.weather_code] || '';
 
-    let ctxParts = [dayStr + ' ' + period + ' · ' + timeStr, Math.round(cur.temperature_2m) + '°F · ' + wxDesc];
-    if (sunsetStr) ctxParts.push('Sunset ' + sunsetStr);
+    // Sunset: API returns "2026-06-13T20:12" already in local tz — parse directly
+    let sunsetStr = null;
+    const sunsetRaw = wx.daily?.sunset?.[0];
+    if (sunsetRaw) {
+      const [h, m] = sunsetRaw.split('T')[1].split(':').map(Number);
+      const ap = h >= 12 ? 'PM' : 'AM';
+      sunsetStr = (h > 12 ? h - 12 : h || 12) + ':' + String(m).padStart(2,'0') + ' ' + ap;
+    }
+
+    const parts = [
+      dayStr + ' ' + period + '  ·  ' + timeStr,
+      Math.round(cur.temperature_2m) + '°F · ' + wxDesc,
+    ];
+    if (sunsetStr) parts.push('Sunset ' + sunsetStr);
     const ctx = document.getElementById('np-ctx');
-    ctx.textContent = ctxParts.join('  ·  ');
+    ctx.textContent = parts.join('  ·  ');
     ctx.style.display = 'block';
   } catch(e) {}
 
