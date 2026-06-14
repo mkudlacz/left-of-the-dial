@@ -97,7 +97,13 @@
     background: rgba(138,100,16,0.12); border-color: rgba(138,100,16,0.35); color: #7a5c0c;
   }
   #filter-row {
-    display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px;
+    display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px;
+    align-items: center;
+  }
+  #filter-toggle {
+    background: none; border: none; cursor: pointer; padding: 2px 0;
+    font-family: monospace; font-size: 10px; letter-spacing: 1px;
+    color: #555; text-transform: uppercase; flex-shrink: 0;
   }
   .filter-chip {
     background: rgba(0,0,0,0.1); border: 1px solid rgba(0,0,0,0.2);
@@ -584,6 +590,8 @@ const FILTERS = [
   { label:'Mountain',   fn: s => s.tags.includes('mountain west') },
 ];
 
+let filtersOpen = false;
+
 let state = {
   tab: 'presets',      // 'presets' | 'browse' | 'favs'
   filterIdx: 0,
@@ -635,7 +643,17 @@ function buildFilters() {
   const row = document.getElementById('filter-row');
   row.innerHTML = '';
 
-  // In Presets/Starred, only show chips that match at least one station in that set
+  // Disclosure toggle
+  const toggle = document.createElement('button');
+  toggle.id = 'filter-toggle';
+  const activeLabel = state.filterIdx === 0 ? '' : '  ' + FILTERS[state.filterIdx].label;
+  toggle.textContent = (filtersOpen ? '▾' : '▸') + activeLabel;
+  toggle.onclick = () => { filtersOpen = !filtersOpen; render(); };
+  row.appendChild(toggle);
+
+  if (!filtersOpen) return;
+
+  // Only show chips relevant to current tab's station pool
   let pool = null;
   if (state.tab === 'presets') {
     pool = PRESETS.map(id => DB.find(s => s.id === id)).filter(Boolean);
@@ -644,7 +662,6 @@ function buildFilters() {
   }
 
   FILTERS.forEach((f, i) => {
-    // Skip non-All chips that have no matches in the current pool
     if (pool && i !== 0 && !pool.some(f.fn)) return;
     const btn = document.createElement('button');
     btn.className = 'filter-chip' + (i === state.filterIdx ? ' active' : '');
@@ -829,8 +846,11 @@ function clearEnrichment() {
 
 async function enrichStation(station) {
   clearEnrichment();
+  // Show city immediately so something is always visible
+  const ctx = document.getElementById('np-ctx');
+  ctx.textContent = station.city + ', ' + station.state;
+  ctx.style.display = 'block';
 
-  // Geocode city → lat/lon + timezone, then weather + sunset
   try {
     const geo = await fetch(
       'https://geocoding-api.open-meteo.com/v1/search?name=' +
@@ -855,7 +875,6 @@ async function enrichStation(station) {
     const cur = wx.current;
     const wxDesc = WX[cur.weather_code] || '';
 
-    // Sunset: API returns "2026-06-13T20:12" already in local tz — parse directly
     let sunsetStr = null;
     const sunsetRaw = wx.daily?.sunset?.[0];
     if (sunsetRaw) {
@@ -866,13 +885,13 @@ async function enrichStation(station) {
 
     const parts = [
       dayStr + ' ' + period + '  ·  ' + timeStr,
-      Math.round(cur.temperature_2m) + '°F · ' + wxDesc,
+      Math.round(cur.temperature_2m) + '°F  ·  ' + wxDesc,
     ];
     if (sunsetStr) parts.push('Sunset ' + sunsetStr);
-    const ctx = document.getElementById('np-ctx');
     ctx.textContent = parts.join('  ·  ');
-    ctx.style.display = 'block';
-  } catch(e) {}
+  } catch(e) {
+    // ctx already shows city, state — leave it
+  }
 
   // 3. Icecast listener count (best-effort)
   try {
