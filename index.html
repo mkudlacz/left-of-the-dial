@@ -862,10 +862,6 @@ async function enrichStation(station) {
     const tz = loc.timezone;
     const now = new Date();
     const timeStr = now.toLocaleTimeString('en-US', {timeZone: tz, hour: 'numeric', minute: '2-digit', hour12: true});
-    const dayStr  = now.toLocaleDateString('en-US', {timeZone: tz, weekday: 'long'});
-    const hour    = parseInt(now.toLocaleTimeString('en-US', {timeZone: tz, hour: 'numeric', hour12: false}));
-    const period  = hour < 5 ? 'night' : hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : hour < 21 ? 'evening' : 'night';
-
     const wxRes = await fetch(
       'https://api.open-meteo.com/v1/forecast?latitude=' + loc.latitude +
       '&longitude=' + loc.longitude +
@@ -886,7 +882,7 @@ async function enrichStation(station) {
     }
 
     const parts = [
-      dayStr + ' ' + period + '  ·  ' + timeStr,
+      timeStr,
       Math.round(cur.temperature_2m) + '°F · ' + wxDesc,
     ];
     if (sunsetStr) parts.push('Sunset ' + sunsetStr);
