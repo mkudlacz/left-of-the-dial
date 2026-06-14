@@ -8,6 +8,8 @@
 <meta name="apple-mobile-web-app-title" content="Left of the Dial">
 <meta name="theme-color" content="#111111">
 <link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="apple-touch-icon" href="icon.jpg">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231a1a1a'/%3E%3Ccircle cx='16' cy='16' r='13' fill='%239c9a92'/%3E%3Cline x1='16' y1='3' x2='16' y2='6.5' stroke='%234a4a4a' stroke-width='1.5' transform='rotate(0,16,16)'/%3E%3Cline x1='16' y1='3' x2='16' y2='6.5' stroke='%234a4a4a' stroke-width='1.5' transform='rotate(30,16,16)'/%3E%3Cline x1='16' y1='3' x2='16' y2='6.5' stroke='%234a4a4a' stroke-width='1.5' transform='rotate(60,16,16)'/%3E%3Cline x1='16' y1='3' x2='16' y2='6.5' stroke='%234a4a4a' stroke-width='1.5' transform='rotate(90,16,16)'/%3E%3Cline x1='16' y1='3' x2='16' y2='6.5' stroke='%234a4a4a' stroke-width='1.5' transform='rotate(120,16,16)'/%3E%3Cline x1='16' y1='3' x2='16' y2='6.5' stroke='%234a4a4a' stroke-width='1.5' transform='rotate(150,16,16)'/%3E%3Cline x1='16' y1='3' x2='16' y2='6.5' stroke='%234a4a4a' stroke-width='1.5' transform='rotate(180,16,16)'/%3E%3Cline x1='16' y1='3' x2='16' y2='6.5' stroke='%234a4a4a' stroke-width='1.5' transform='rotate(210,16,16)'/%3E%3Cline x1='16' y1='3' x2='16' y2='6.5' stroke='%234a4a4a' stroke-width='1.5' transform='rotate(240,16,16)'/%3E%3Cline x1='16' y1='3' x2='16' y2='6.5' stroke='%234a4a4a' stroke-width='1.5' transform='rotate(270,16,16)'/%3E%3Cline x1='16' y1='3' x2='16' y2='6.5' stroke='%234a4a4a' stroke-width='1.5' transform='rotate(300,16,16)'/%3E%3Cline x1='16' y1='3' x2='16' y2='6.5' stroke='%234a4a4a' stroke-width='1.5' transform='rotate(330,16,16)'/%3E%3Ccircle cx='16' cy='16' r='10' fill='%23252525' stroke='%233a3a3a' stroke-width='0.5'/%3E%3Cline x1='16' y1='7' x2='16' y2='11.5' stroke='%23c9a227' stroke-width='2.5' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='16' r='2' fill='%23555'/%3E%3C/svg%3E">
 <title>Left of the Dial</title>
@@ -85,8 +87,9 @@
     flex-shrink: 0;
   }
   #wordmark-title {
-    font-family: monospace; font-size: 18px; font-weight: 700;
-    color: #8a6410; letter-spacing: 4px;
+    font-family: 'Cormorant Garamond', Garamond, Georgia, serif;
+    font-size: 24px; font-weight: 500;
+    color: #8a6410; letter-spacing: 5px;
     text-shadow: 0 1px 0 rgba(255,255,255,0.4), 0 -1px 0 rgba(0,0,0,0.15);
   }
   #wordmark-sub {
@@ -128,7 +131,7 @@
   /* ── Content ── */
   #content { background: #111; padding: 12px 16px 0; max-width: 700px; margin: 0 auto; }
 
-  /* ── Import row (Saved tab) ── */
+  /* ── Import row (Starred tab) ── */
   #import-row { display: none; gap: 8px; margin-bottom: 12px; }
   #import-input {
     flex: 1; background: var(--bg2); border: 1px solid var(--border);
@@ -344,9 +347,9 @@
   </div>
   <div id="tabs">
     <button class="tab-btn active" data-tab="browse" onclick="switchTab('browse')">Browse</button>
-    <button class="tab-btn" data-tab="favs" onclick="switchTab('favs')">★ Saved (<span id="fav-count">0</span>)</button>
+    <button class="tab-btn" data-tab="favs" onclick="switchTab('favs')">★ Starred (<span id="fav-count">0</span>)</button>
     <button class="tab-btn" data-tab="presets" onclick="switchTab('presets')">Presets</button>
-    <button id="share-btn" onclick="shareFavs()" title="Copy shareable link to saved stations"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/><polyline points="16,6 12,2 8,6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Share</button>
+    <button id="share-btn" onclick="shareFavs()" title="Copy shareable link to starred stations"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/><polyline points="16,6 12,2 8,6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Share</button>
   </div>
   <div id="filter-row" id="filter-row"></div>
 </div>
@@ -355,7 +358,7 @@
   <div id="status-msg"></div>
   <div id="presets-grid"><div class="presets-inner" id="presets-inner"></div></div>
   <div id="import-row">
-    <input id="import-input" type="url" placeholder="Paste a share URL to import saved stations…" autocomplete="off" autocorrect="off" spellcheck="false">
+    <input id="import-input" type="url" placeholder="Paste a share URL to import starred stations…" autocomplete="off" autocorrect="off" spellcheck="false">
     <button id="import-btn" onclick="importFavs()">Import</button>
   </div>
   <div id="loading">
@@ -774,8 +777,8 @@ function render() {
     listEl.innerHTML = '';
     emptyEl.style.display = 'block';
     if (state.tab === 'favs') {
-      document.getElementById('empty-label').textContent = 'NO SAVED STATIONS';
-      document.getElementById('empty-hint').textContent = 'Star any station to save it here.';
+      document.getElementById('empty-label').textContent = 'NO STARRED STATIONS';
+      document.getElementById('empty-hint').textContent = 'Star any station to add it here.';
     } else {
       document.getElementById('empty-label').textContent = 'NO STATIONS FOUND';
       document.getElementById('empty-hint').textContent = 'Try a different search term or filter.';
@@ -1035,14 +1038,14 @@ function importFavs() {
   document.getElementById('import-input').value = '';
   const skipped = valid.length - added;
   showStatus(
-    `Added ${added} station${added !== 1 ? 's' : ''}${skipped ? ` · ${skipped} already saved` : ''}.`,
+    `Added ${added} station${added !== 1 ? 's' : ''}${skipped ? ` · ${skipped} already starred` : ''}.`,
     'info'
   );
   render();
 }
 
 function shareFavs() {
-  if (state.favs.length === 0) { showStatus('No saved stations to share.', 'info'); return; }
+  if (state.favs.length === 0) { showStatus('No starred stations to share.', 'info'); return; }
   const url = location.href.split('#')[0] + '#favs=' + state.favs.join(',');
   navigator.clipboard.writeText(url).then(() => {
     const btn = document.getElementById('share-btn');
@@ -1050,7 +1053,7 @@ function shareFavs() {
     btn.classList.add('copied');
     setTimeout(() => { btn.innerHTML = '<svg viewBox=\"0 0 24 24\" width=\"13\" height=\"13\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3\"/><polyline points=\"16,6 12,2 8,6\"/><line x1=\"12\" y1=\"2\" x2=\"12\" y2=\"15\"/></svg> Share'; btn.classList.remove('copied'); }, 2000);
   }).catch(() => {
-    prompt('Copy this link to share your saved stations:', url);
+    prompt('Copy this link to share your starred stations:', url);
   });
 }
 
