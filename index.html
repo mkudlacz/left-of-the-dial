@@ -346,9 +346,9 @@
     <input id="search-input" type="search" placeholder='Search — "WKCR", "Columbia", "Seattle", "jazz"…' autocomplete="off" autocorrect="off" spellcheck="false">
   </div>
   <div id="tabs">
-    <button class="tab-btn active" data-tab="browse" onclick="switchTab('browse')">Browse</button>
-    <button class="tab-btn" data-tab="favs" onclick="switchTab('favs')">★ Starred (<span id="fav-count">0</span>)</button>
-    <button class="tab-btn" data-tab="presets" onclick="switchTab('presets')">Presets</button>
+    <button class="tab-btn active" data-tab="presets" onclick="switchTab('presets')">Presets</button>
+    <button class="tab-btn" data-tab="browse" onclick="switchTab('browse')">Browse</button>
+    <button class="tab-btn" data-tab="favs" onclick="switchTab('favs')">★ (<span id="fav-count">0</span>)</button>
     <button id="share-btn" onclick="shareFavs()" title="Copy shareable link to starred stations"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/><polyline points="16,6 12,2 8,6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Share</button>
   </div>
   <div id="filter-row" id="filter-row"></div>
@@ -626,7 +626,7 @@ const FILTERS = [
 ];
 
 let state = {
-  tab: 'browse',       // 'browse' | 'favs'
+  tab: 'presets',      // 'presets' | 'browse' | 'favs'
   filterIdx: 0,
   searchQuery: '',
   searchMode: false,
