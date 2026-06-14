@@ -236,9 +236,9 @@
     color: var(--amber); cursor: pointer;
     display: flex; align-items: center; justify-content: center;
   }
-  #np-org  { font-size: 13px; color: var(--text-dim); margin-bottom: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #np-org  { font-size: 13px; color: var(--text-dim); margin-bottom: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #np-meta { font-size: 14px; color: var(--text); font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: none; margin-bottom: 10px; }
   #np-ctx  { font-size: 11px; color: #888; font-family: monospace; margin-bottom: 4px; display: none; }
-  #np-meta { font-size: 11px; color: #999; font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: none; }
   #np-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
   #np-status { color: #555; font-family: monospace; font-size: 10px; }
   #np-link   { color: #666; font-family: monospace; font-size: 10px; text-decoration: none; }
@@ -345,8 +345,8 @@
         <button id="play-stop-btn" onclick="togglePlay()"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="6,3 20,12 6,21"/></svg></button>
       </div>
       <div id="np-org">—</div>
-      <div id="np-ctx"></div>
       <div id="np-meta"></div>
+      <div id="np-ctx"></div>
       <div id="np-foot">
         <div id="np-status">—</div>
         <a id="np-link" href="#" target="_blank" rel="noreferrer"></a>
