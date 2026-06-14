@@ -97,13 +97,7 @@
     background: rgba(138,100,16,0.12); border-color: rgba(138,100,16,0.35); color: #7a5c0c;
   }
   #filter-row {
-    display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px;
-    align-items: center;
-  }
-  #filter-toggle {
-    background: none; border: none; cursor: pointer; padding: 2px 0;
-    font-family: monospace; font-size: 10px; letter-spacing: 1px;
-    color: #555; text-transform: uppercase; flex-shrink: 0;
+    display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px;
   }
   .filter-chip {
     background: rgba(0,0,0,0.1); border: 1px solid rgba(0,0,0,0.2);
@@ -590,8 +584,6 @@ const FILTERS = [
   { label:'Mountain',   fn: s => s.tags.includes('mountain west') },
 ];
 
-let filtersOpen = false;
-
 let state = {
   tab: 'presets',      // 'presets' | 'browse' | 'favs'
   filterIdx: 0,
@@ -642,16 +634,6 @@ function animateNeedle() {
 function buildFilters() {
   const row = document.getElementById('filter-row');
   row.innerHTML = '';
-
-  // Disclosure toggle
-  const toggle = document.createElement('button');
-  toggle.id = 'filter-toggle';
-  const activeLabel = state.filterIdx === 0 ? '' : '  ' + FILTERS[state.filterIdx].label;
-  toggle.textContent = (filtersOpen ? '▾' : '▸') + activeLabel;
-  toggle.onclick = () => { filtersOpen = !filtersOpen; render(); };
-  row.appendChild(toggle);
-
-  if (!filtersOpen) return;
 
   // Only show chips relevant to current tab's station pool
   let pool = null;
@@ -851,14 +833,22 @@ async function enrichStation(station) {
   ctx.textContent = station.city + ', ' + station.state;
   ctx.style.display = 'block';
 
+  // Step 1: geocode
+  let loc;
   try {
     const geo = await fetch(
       'https://geocoding-api.open-meteo.com/v1/search?name=' +
       encodeURIComponent(station.city) + '&count=5&language=en&format=json'
     ).then(r => r.json());
-    const loc = (geo.results || []).find(r => r.country_code === 'US');
-    if (!loc) return;
+    loc = (geo.results || []).find(r => r.country_code === 'US');
+    if (!loc) { ctx.textContent += '  ·  no geo'; return; }
+  } catch(e) {
+    ctx.textContent += '  ·  geo err: ' + (e.message || e);
+    return;
+  }
 
+  // Step 2: weather
+  try {
     const tz = loc.timezone;
     const now = new Date();
     const timeStr = now.toLocaleTimeString('en-US', {timeZone: tz, hour: 'numeric', minute: '2-digit', hour12: true});
@@ -890,7 +880,7 @@ async function enrichStation(station) {
     if (sunsetStr) parts.push('Sunset ' + sunsetStr);
     ctx.textContent = parts.join('  ·  ');
   } catch(e) {
-    // ctx already shows city, state — leave it
+    ctx.textContent += '  ·  wx err: ' + (e.message || e);
   }
 
   // 3. Icecast listener count (best-effort)
