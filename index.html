@@ -236,7 +236,7 @@
     color: var(--amber); cursor: pointer;
     display: flex; align-items: center; justify-content: center;
   }
-  #np-org  { font-size: 11px; color: var(--text-dim); margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #np-org  { font-size: 13px; color: var(--text-dim); margin-bottom: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #np-ctx  { font-size: 11px; color: #888; font-family: monospace; margin-bottom: 4px; display: none; }
   #np-meta { font-size: 11px; color: #999; font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: none; }
   #np-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
@@ -817,6 +817,16 @@ function clearMediaSession() {
 }
 
 
+const WX = {
+  0:'Clear sky', 1:'Mostly clear', 2:'Partly cloudy', 3:'Overcast',
+  45:'Foggy', 48:'Icy fog',
+  51:'Light drizzle', 53:'Drizzle', 55:'Heavy drizzle',
+  61:'Light rain', 63:'Rain', 65:'Heavy rain',
+  71:'Light snow', 73:'Snow', 75:'Heavy snow', 77:'Snow grains',
+  80:'Showers', 81:'Showers', 82:'Heavy showers',
+  95:'Thunderstorm', 96:'Thunderstorm + hail', 99:'Severe thunderstorm'
+};
+
 // ─────────────────────────────────────────────────────────────
 // Station enrichment: Wikipedia image/blurb, weather, listeners
 // ─────────────────────────────────────────────────────────────
@@ -830,7 +840,7 @@ async function enrichStation(station) {
   clearEnrichment();
   // Show city immediately so something is always visible
   const ctx = document.getElementById('np-ctx');
-  ctx.textContent = station.city + ', ' + station.state;
+  ctx.textContent = '…';
   ctx.style.display = 'block';
 
   // Step 1: geocode
@@ -877,12 +887,12 @@ async function enrichStation(station) {
 
     const parts = [
       dayStr + ' ' + period + '  ·  ' + timeStr,
-      Math.round(cur.temperature_2m) + '°F  ·  ' + wxDesc,
+      Math.round(cur.temperature_2m) + '°F · ' + wxDesc,
     ];
     if (sunsetStr) parts.push('Sunset ' + sunsetStr);
     ctx.textContent = parts.join('  ·  ');
   } catch(e) {
-    ctx.textContent += '  ·  wx err: ' + (e.message || String(e));
+    ctx.textContent = 'wx err: ' + (e.message || String(e));
   }
 
   // 3. Icecast listener count (best-effort)
