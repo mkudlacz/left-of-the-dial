@@ -680,7 +680,18 @@ function animateNeedle() {
 function buildFilters() {
   const row = document.getElementById('filter-row');
   row.innerHTML = '';
+
+  // In Presets/Starred, only show chips that match at least one station in that set
+  let pool = null;
+  if (state.tab === 'presets') {
+    pool = PRESETS.map(id => DB.find(s => s.id === id)).filter(Boolean);
+  } else if (state.tab === 'favs') {
+    pool = DB.filter(s => state.favs.includes(s.id));
+  }
+
   FILTERS.forEach((f, i) => {
+    // Skip non-All chips that have no matches in the current pool
+    if (pool && i !== 0 && !pool.some(f.fn)) return;
     const btn = document.createElement('button');
     btn.className = 'filter-chip' + (i === state.filterIdx ? ' active' : '');
     btn.textContent = f.label;
@@ -1080,6 +1091,7 @@ function toggleFav(id) {
 function switchTab(tab) {
   state.tab = tab;
   state.searchMode = false;
+  state.filterIdx = 0;
   render();
 }
 
