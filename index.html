@@ -213,26 +213,6 @@
     margin: 0 10px 0 0;
   }
 
-  /* ── Tile star button ── */
-  .tile-star {
-    position: absolute; top: 6px; right: 6px;
-    background: rgba(0,0,0,0.45); border: none; border-radius: 50%;
-    width: 26px; height: 26px; cursor: pointer; font-size: 14px;
-    color: rgba(255,255,255,0.5);
-    display: flex; align-items: center; justify-content: center;
-    transition: color 0.15s;
-  }
-  .tile-star.saved { color: var(--amber); }
-  .tile-map { position: relative; }
-
-  /* ── Inline star (no-map tiles, e.g. Starred tab) ── */
-  .tile-star-inline {
-    background: none; border: none; cursor: pointer; font-size: 16px;
-    color: var(--text-faint); line-height: 1; flex-shrink: 0;
-    margin-left: auto; padding: 0 0 0 6px;
-  }
-  .tile-star-inline.saved { color: var(--amber); }
-
   /* ── Now Playing ── */
   #now-playing {
     display: none;
@@ -317,13 +297,17 @@
     color: var(--amber); opacity: 0.6; letter-spacing: 0;
     vertical-align: super; margin-left: 3px;
   }
-  .tile-cat {
-    font-size: 9px; color: var(--text-faint); font-family: monospace;
-    letter-spacing: 0.5px; text-transform: uppercase;
+  .tile-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 6px; margin-top: 2px;
   }
-  .tile-college { font-size: 10px; color: var(--text-dim); margin-bottom: 2px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tile-format  { font-size: 10px; color: var(--text-faint); }
+  .tile-format { font-size: 10px; color: var(--text-faint); }
+  .tile-star {
+    background: none; border: none; cursor: pointer; font-size: 14px;
+    color: var(--text-faint); line-height: 1; padding: 0; flex-shrink: 0;
+    transition: color 0.15s;
+  }
+  .tile-star.saved { color: var(--amber); }
 
   /* ── Share button ── */
   #share-btn {
@@ -748,13 +732,6 @@ function loadTileMap(mapId, city, stateCode, mapEl) {
 // ─────────────────────────────────────────────────────────────
 const PRESETS = ['wzbc','wamh','wkcr','wfmu','whyy','wxyc','wluw','wbez','kcou','kuom','wmcn','kjhk','krnu','kzsc','kdvs','kuci','kqed','kexp','wsum'];
 
-function getCategory(s) {
-  if (s.tags.includes('college')) return 'College';
-  if (s.tags.includes('public') || s.tags.includes('npr')) return 'Public';
-  if (s.tags.includes('community')) return 'Community';
-  return '';
-}
-
 function getFormat(s) {
   const priority = ['jazz','classical','freeform','blues','rock','indie','news','eclectic'];
   const match = priority.find(t => s.tags.includes(t));
@@ -771,29 +748,24 @@ function renderTileGrid(stations, showMap = true) {
     const tile = document.createElement('div');
     tile.className = 'preset-tile' + (isActive ? ' active' : '');
     const freq = s.freq.replace(' FM','').replace(' AM','').replace(' Web','—');
-    const isCollege = s.tags.includes('college');
-    const cat = isCollege ? '' : getCategory(s);
     const fmt = getFormat(s);
     const isFav = state.favs.includes(s.id);
-    const starClass = showMap ? 'tile-star' : 'tile-star-inline';
     tile.innerHTML = `
-      ${showMap ? `<div class="tile-map">
-        <button class="${starClass} ${isFav ? 'saved' : ''}" data-id="${s.id}">${isFav ? '★' : '☆'}</button>
-      </div>` : ''}
+      ${showMap ? `<div class="tile-map"></div>` : ''}
       <div class="tile-body">
         <div class="tile-id-row">
           <span class="preset-call">${s.id.toUpperCase()}<sup class="preset-freq">${freq}</sup></span>
-          ${cat ? `<span class="tile-cat">${cat}</span>` : ''}
-          ${showMap ? '' : `<button class="${starClass} ${isFav ? 'saved' : ''}" data-id="${s.id}">${isFav ? '★' : '☆'}</button>`}
         </div>
-        ${isCollege ? `<div class="tile-college">${s.org}</div>` : ''}
-        <div class="tile-format">${fmt}</div>
+        <div class="tile-footer">
+          <span class="tile-format">${fmt}</span>
+          <button class="tile-star ${isFav ? 'saved' : ''}" data-id="${s.id}">${isFav ? '★' : '☆'}</button>
+        </div>
       </div>
     `;
-    tile.querySelector('.' + starClass).addEventListener('click', (e) => {
+    tile.querySelector('.tile-star').addEventListener('click', (e) => {
       e.stopPropagation();
       toggleFav(s.id);
-      e.currentTarget.className = starClass + (state.favs.includes(s.id) ? ' saved' : '');
+      e.currentTarget.className = 'tile-star' + (state.favs.includes(s.id) ? ' saved' : '');
       e.currentTarget.textContent = state.favs.includes(s.id) ? '★' : '☆';
     });
     tile.addEventListener('click', () => tune(s));
