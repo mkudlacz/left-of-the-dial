@@ -251,35 +251,41 @@
   }
   .preset-tile {
     background: var(--bg2); border: 1px solid var(--border);
-    border-radius: 8px; padding: 12px 11px 11px; cursor: pointer;
+    border-radius: 8px; overflow: hidden; cursor: pointer;
     transition: border-color 0.2s, background 0.2s;
     -webkit-user-select: none; user-select: none;
   }
-  .preset-tile:active { background: rgba(255,255,255,0.07); }
-  .preset-tile.active {
-    background: linear-gradient(135deg, rgba(201,162,39,0.1), rgba(201,162,39,0.03));
-    border-color: var(--amber-border);
+  .preset-tile:active { opacity: 0.8; }
+  .preset-tile.active { border-color: var(--amber-border); }
+  .tile-map {
+    width: 100%; height: 72px;
+    background: #1e2a1e center/cover no-repeat;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    filter: brightness(0.75) saturate(0.6);
+    transition: filter 0.3s;
   }
-  .tile-top {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 6px;
-  }
-  .tile-city { font-size: 10px; color: var(--text-dim); }
-  .tile-cat  {
-    font-size: 9px; color: var(--text-faint); font-family: monospace;
-    letter-spacing: 0.5px; text-transform: uppercase;
-  }
+  .preset-tile.active .tile-map { filter: brightness(0.9) saturate(0.8); }
+  .tile-body { padding: 9px 10px 10px; }
   .preset-freq {
-    font-family: monospace; font-size: 26px; font-weight: 700;
+    font-family: monospace; font-size: 24px; font-weight: 700;
     color: var(--amber); line-height: 1; margin-bottom: 4px;
     letter-spacing: -0.5px;
   }
   .preset-tile.active .preset-freq { text-shadow: 0 0 8px rgba(201,162,39,0.4); }
+  .tile-id-row {
+    display: flex; align-items: baseline; gap: 6px; margin-bottom: 2px;
+  }
   .preset-call {
     font-size: 12px; font-weight: 700; color: var(--text);
-    letter-spacing: 1px; font-family: monospace; margin-bottom: 3px;
+    letter-spacing: 1px; font-family: monospace;
   }
-  .tile-format { font-size: 10px; color: var(--text-dim); }
+  .tile-cat {
+    font-size: 9px; color: var(--text-faint); font-family: monospace;
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .tile-college { font-size: 10px; color: var(--text-dim); margin-bottom: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tile-format  { font-size: 10px; color: var(--text-faint); }
 
   /* ── Share button ── */
   #share-btn {
@@ -658,6 +664,48 @@ function buildFilters() {
 }
 
 
+
+// ── OSM map tile helper for station tiles ─────────────────────
+const tileGeoCache = {}; // city+state → {lat, lon}
+
+function osmTileUrl(lat, lon, zoom) {
+  const n = Math.pow(2, zoom);
+  const x = Math.floor((lon + 180) / 360 * n);
+  const lr = lat * Math.PI / 180;
+  const y = Math.floor((1 - Math.log(Math.tan(lr) + 1/Math.cos(lr)) / Math.PI) / 2 * n);
+  return 'https://tile.openstreetmap.org/' + zoom + '/' + x + '/' + y + '.png';
+}
+
+async function fetchTileGeo(station) {
+  const key = station.city + ',' + station.state;
+  if (tileGeoCache[key]) return tileGeoCache[key];
+  try {
+    const geo = await fetch(
+      'https://geocoding-api.open-meteo.com/v1/search?name=' +
+      encodeURIComponent(station.city) + '&count=5&language=en&format=json'
+    ).then(r => r.json());
+    const loc = (geo.results || []).find(r => r.country_code === 'US');
+    if (loc) tileGeoCache[key] = { lat: loc.latitude, lon: loc.longitude };
+  } catch(e) {}
+  return tileGeoCache[key] || null;
+}
+
+function loadTileMap(stationId, city, state, mapEl) {
+  const key = city + ',' + state;
+  if (tileGeoCache[key]) {
+    const { lat, lon } = tileGeoCache[key];
+    mapEl.style.backgroundImage = 'url(' + osmTileUrl(lat, lon, 11) + ')';
+    return;
+  }
+  const fakeStation = { city, state };
+  fetchTileGeo(fakeStation).then(loc => {
+    if (loc && document.getElementById('map_' + stationId)) {
+      document.getElementById('map_' + stationId).style.backgroundImage =
+        'url(' + osmTileUrl(loc.lat, loc.lon, 11) + ')';
+    }
+  });
+}
+
 // ─────────────────────────────────────────────────────────────
 // RCD's Presets — curated station tiles
 // ─────────────────────────────────────────────────────────────
@@ -686,19 +734,26 @@ function renderTileGrid(stations) {
     const tile = document.createElement('div');
     tile.className = 'preset-tile' + (isActive ? ' active' : '');
     const freq = s.freq.replace(' FM','').replace(' AM','').replace(' Web','—');
-    const cat = getCategory(s);
+    const isCollege = s.tags.includes('college');
+    const cat = isCollege ? '' : getCategory(s);
     const fmt = getFormat(s);
     tile.innerHTML = `
-      <div class="tile-top">
-        <span class="tile-city">📍 ${s.city}</span>
-        ${cat ? `<span class="tile-cat">${cat}</span>` : ''}
+      <div class="tile-map" id="map_${s.id}"></div>
+      <div class="tile-body">
+        <div class="preset-freq">${freq}</div>
+        <div class="tile-id-row">
+          <span class="preset-call">${s.id.toUpperCase()}</span>
+          ${cat ? `<span class="tile-cat">${cat}</span>` : ''}
+        </div>
+        ${isCollege ? `<div class="tile-college">${s.org}</div>` : ''}
+        <div class="tile-format">${fmt}</div>
       </div>
-      <div class="preset-freq">${freq}</div>
-      <div class="preset-call">${s.id.toUpperCase()}</div>
-      <div class="tile-format">${fmt}</div>
     `;
     tile.addEventListener('click', () => tune(s));
     grid.appendChild(tile);
+    // Load map asynchronously
+    const mapEl = tile.querySelector('.tile-map');
+    loadTileMap(s.id, s.city, s.state, mapEl);
   });
 }
 
@@ -1209,24 +1264,6 @@ function showStatus(msg, type) {
 // ─────────────────────────────────────────────────────────────
 render();
 </script>
-  <div id="sp-head">
-    <div>
-      <div id="sp-call">—</div>
-      <div id="sp-org">—</div>
-    </div>
-    <button id="sp-close" onclick="closeStationPanel()">✕</button>
-  </div>
-  <div id="sp-body">
-    <div class="sp-row">
-      <div class="sp-col"><div class="sp-lbl">Local Time</div><div class="sp-val" id="sp-time">—</div></div>
-      <div class="sp-col"><div class="sp-lbl">Conditions</div><div class="sp-val" id="sp-weather">—</div></div>
-    </div>
-    <div class="sp-row" id="sp-playing-row" style="display:none">
-      <div class="sp-col"><div class="sp-lbl">Now Playing</div><div class="sp-val" id="sp-playing">—</div></div>
-    </div>
-    <a id="sp-site" href="#" target="_blank" rel="noreferrer">VISIT STATION ↗</a>
-  </div>
-</div>
 
 </body>
 </html>
