@@ -297,6 +297,10 @@
     color: var(--amber); opacity: 0.6; letter-spacing: 0;
     vertical-align: super; margin-left: 3px;
   }
+  .tile-meta {
+    font-size: 10px; color: var(--text-dim); margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
   .tile-footer {
     display: flex; align-items: center; justify-content: space-between;
     gap: 6px; margin-top: 2px;
@@ -748,6 +752,7 @@ function renderTileGrid(stations, showMap = true) {
     const tile = document.createElement('div');
     tile.className = 'preset-tile' + (isActive ? ' active' : '');
     const freq = s.freq.replace(' FM','').replace(' AM','').replace(' Web','—');
+    const isCollege = s.tags.includes('college');
     const fmt = getFormat(s);
     const isFav = state.favs.includes(s.id);
     tile.innerHTML = `
@@ -756,6 +761,8 @@ function renderTileGrid(stations, showMap = true) {
         <div class="tile-id-row">
           <span class="preset-call">${s.id.toUpperCase()}<sup class="preset-freq">${freq}</sup></span>
         </div>
+        ${isCollege ? `<div class="tile-meta">${s.org}</div>` : ''}
+        <div class="tile-meta">${s.city}, ${s.state}</div>
         <div class="tile-footer">
           <span class="tile-format">${fmt}</span>
           <button class="tile-star ${isFav ? 'saved' : ''}" data-id="${s.id}">${isFav ? '★' : '☆'}</button>
