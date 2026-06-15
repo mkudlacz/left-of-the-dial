@@ -50,7 +50,7 @@
   /* Wood cabinet top panel */
   #header::before {
     content: ''; position: absolute; top: 0; left: 0; right: 0;
-    height: calc(40px + env(safe-area-inset-top, 0px));
+    height: calc(26.4px + env(safe-area-inset-top, 0px));
     background:
       repeating-linear-gradient(90deg,
         transparent 0px, transparent 38px,
@@ -69,7 +69,7 @@
   /* Console edge — thick black lip between wood and faceplate */
   #header::after {
     content: ''; position: absolute;
-    top: calc(40px + env(safe-area-inset-top, 0px));
+    top: calc(26.4px + env(safe-area-inset-top, 0px));
     left: 0; right: 0; height: 3px;
     background: linear-gradient(180deg, #0d0806 0%, #060402 55%, #1a120a 100%);
     box-shadow: 0 2px 6px rgba(0,0,0,0.5);
@@ -225,6 +225,14 @@
   .tile-star.saved { color: var(--amber); }
   .tile-map { position: relative; }
 
+  /* ── Inline star (no-map tiles, e.g. Starred tab) ── */
+  .tile-star-inline {
+    background: none; border: none; cursor: pointer; font-size: 16px;
+    color: var(--text-faint); line-height: 1; flex-shrink: 0;
+    margin-left: auto; padding: 0 0 0 6px;
+  }
+  .tile-star-inline.saved { color: var(--amber); }
+
   /* ── Now Playing ── */
   #now-playing {
     display: none;
@@ -296,18 +304,18 @@
   }
   .preset-tile.active .tile-map { filter: brightness(0.9) saturate(0.8); }
   .tile-body { padding: 9px 10px 10px; }
-  .preset-freq {
-    font-family: monospace; font-size: 24px; font-weight: 700;
-    color: var(--amber); line-height: 1; margin-bottom: 4px;
-    letter-spacing: -0.5px;
-  }
-  .preset-tile.active .preset-freq { text-shadow: 0 0 8px rgba(201,162,39,0.4); }
   .tile-id-row {
-    display: flex; align-items: baseline; gap: 6px; margin-bottom: 2px;
+    display: flex; align-items: baseline; gap: 6px; margin-bottom: 3px;
   }
   .preset-call {
-    font-size: 12px; font-weight: 700; color: var(--text);
-    letter-spacing: 1px; font-family: monospace;
+    font-family: monospace; font-size: 24px; font-weight: 700;
+    color: var(--amber); line-height: 1; letter-spacing: -0.5px;
+  }
+  .preset-tile.active .preset-call { text-shadow: 0 0 8px rgba(201,162,39,0.4); }
+  .preset-freq {
+    font-family: monospace; font-size: 10px; font-weight: 700;
+    color: var(--amber); opacity: 0.6; letter-spacing: 0;
+    vertical-align: super; margin-left: 3px;
   }
   .tile-cat {
     font-size: 9px; color: var(--text-faint); font-family: monospace;
@@ -634,6 +642,7 @@ let state = {
   tuning: false,
   favs: [],
   metaCache: {},
+  listenerCount: null,
 };
 
 try { state.favs = JSON.parse(localStorage.getItem('lotd-favs') || localStorage.getItem('freeform-favs') || '[]'); } catch(e) {}
@@ -753,7 +762,7 @@ function getFormat(s) {
   return s.genre.split(/[·,]/)[0].trim().split(' ')[0];
 }
 
-function renderTileGrid(stations) {
+function renderTileGrid(stations, showMap = true) {
   const grid = document.getElementById('presets-inner');
   grid.innerHTML = '';
   const filterFn = FILTERS[state.filterIdx].fn;
@@ -766,36 +775,43 @@ function renderTileGrid(stations) {
     const cat = isCollege ? '' : getCategory(s);
     const fmt = getFormat(s);
     const isFav = state.favs.includes(s.id);
+    const starClass = showMap ? 'tile-star' : 'tile-star-inline';
     tile.innerHTML = `
-      <div class="tile-map">
-        <button class="tile-star ${isFav ? 'saved' : ''}" data-id="${s.id}">${isFav ? '★' : '☆'}</button>
-      </div>
+      ${showMap ? `<div class="tile-map">
+        <button class="${starClass} ${isFav ? 'saved' : ''}" data-id="${s.id}">${isFav ? '★' : '☆'}</button>
+      </div>` : ''}
       <div class="tile-body">
-        <div class="preset-freq">${freq}</div>
         <div class="tile-id-row">
-          <span class="preset-call">${s.id.toUpperCase()}</span>
+          <span class="preset-call">${s.id.toUpperCase()}<sup class="preset-freq">${freq}</sup></span>
           ${cat ? `<span class="tile-cat">${cat}</span>` : ''}
+          ${showMap ? '' : `<button class="${starClass} ${isFav ? 'saved' : ''}" data-id="${s.id}">${isFav ? '★' : '☆'}</button>`}
         </div>
         ${isCollege ? `<div class="tile-college">${s.org}</div>` : ''}
         <div class="tile-format">${fmt}</div>
       </div>
     `;
-    tile.querySelector('.tile-star').addEventListener('click', (e) => {
+    tile.querySelector('.' + starClass).addEventListener('click', (e) => {
       e.stopPropagation();
       toggleFav(s.id);
-      e.currentTarget.className = 'tile-star' + (state.favs.includes(s.id) ? ' saved' : '');
+      e.currentTarget.className = starClass + (state.favs.includes(s.id) ? ' saved' : '');
       e.currentTarget.textContent = state.favs.includes(s.id) ? '★' : '☆';
     });
     tile.addEventListener('click', () => tune(s));
     grid.appendChild(tile);
-    const mapEl = tile.querySelector('.tile-map');
-    loadTileMap('t_' + s.id, s.city, s.state, mapEl);
+    if (showMap) {
+      const mapEl = tile.querySelector('.tile-map');
+      loadTileMap('t_' + s.id, s.city, s.state, mapEl);
+    }
   });
 }
 
 // ─────────────────────────────────────────────────────────────
 // Render station list
 // ─────────────────────────────────────────────────────────────
+function sortByName(list) {
+  return [...list].sort((a, b) => a.name.localeCompare(b.name));
+}
+
 function getDisplayList() {
   let list = DB;
   if (state.tab === 'favs') {
@@ -824,7 +840,7 @@ function getDisplayList() {
       (state.metaCache[s.id] || '').toLowerCase().includes(q)
     );
   }
-  return list;
+  return sortByName(list);
 }
 
 const cardMapObserver = new IntersectionObserver((entries) => {
@@ -853,7 +869,7 @@ function render() {
     renderTileGrid(PRESETS.map(id => DB.find(s => s.id === id)).filter(Boolean));
   } else if (state.tab === 'favs') {
     presetsGrid.style.display = 'block';
-    renderTileGrid(DB.filter(s => state.favs.includes(s.id)));
+    renderTileGrid(sortByName(DB.filter(s => state.favs.includes(s.id))), false);
   } else {
     presetsGrid.style.display = 'none';
   }
@@ -967,6 +983,7 @@ const WX = {
 function clearEnrichment() {
   const ctx = document.getElementById('np-ctx');
   ctx.textContent = ''; ctx.style.display = 'none';
+  state.listenerCount = null;
 }
 
 async function enrichStation(station) {
@@ -1031,8 +1048,8 @@ async function enrichStation(station) {
     let src = d?.icestats?.source;
     if (Array.isArray(src)) src = src[0];
     if (src?.listeners > 0) {
-      const ctx = document.getElementById('np-ctx');
-      ctx.textContent += '  ·  ' + src.listeners.toLocaleString() + ' listening';
+      state.listenerCount = src.listeners;
+      updateNowPlaying();
     }
   } catch(e) {}
 }
@@ -1201,8 +1218,9 @@ function updateNowPlaying() {
   nameEl.appendChild(document.createTextNode(s.name + (meta ? '  ·  ' + meta : '')));
 
   document.getElementById('np-org').textContent = s.org + ' · ' + s.city + ', ' + s.state;
-  document.getElementById('np-status').textContent =
-    state.tuning ? 'Scanning…' : state.playing ? '● LIVE' : 'Stopped';
+  let statusText = state.tuning ? 'Scanning…' : state.playing ? '● LIVE' : 'Stopped';
+  if (state.playing && state.listenerCount) statusText += ' • ' + state.listenerCount.toLocaleString();
+  document.getElementById('np-status').textContent = statusText;
 
   const link = document.getElementById('np-link');
   link.textContent = s.site + ' ↗';
