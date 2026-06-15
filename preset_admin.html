@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Left of the Dial — Preset Editor</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #111; color: #ccc; font-family: -apple-system, sans-serif; padding: 24px 16px; }
+  h1 { font-family: monospace; font-size: 14px; letter-spacing: 3px; color: #c9a227; margin-bottom: 4px; }
+  p  { font-size: 12px; color: #555; margin-bottom: 20px; }
+  #search {
+    width: 100%; background: #1a1a1a; border: 1px solid #333; border-radius: 4px;
+    padding: 9px 12px; color: #ccc; font-size: 16px; margin-bottom: 16px; outline: none;
+  }
+  #search:focus { border-color: #c9a227; }
+  #count { font-size: 12px; color: #555; margin-bottom: 12px; font-family: monospace; }
+  .station {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: 6px; cursor: pointer;
+    border: 1px solid transparent; margin-bottom: 4px;
+    transition: background 0.1s;
+  }
+  .station:hover { background: rgba(255,255,255,0.04); }
+  .station.checked { background: rgba(201,162,39,0.08); border-color: rgba(201,162,39,0.25); }
+  .station input[type=checkbox] { width: 16px; height: 16px; accent-color: #c9a227; flex-shrink: 0; cursor: pointer; }
+  .station-info { flex: 1; min-width: 0; }
+  .station-name { font-size: 13px; font-weight: 600; color: #ddd; }
+  .station.checked .station-name { color: #c9a227; }
+  .station-meta { font-size: 11px; color: #555; margin-top: 1px; }
+  .station-id { font-family: monospace; font-size: 10px; color: #444; }
+  #copy-btn {
+    position: sticky; bottom: 0; width: 100%; margin-top: 20px;
+    background: #c9a227; border: none; border-radius: 6px;
+    padding: 14px; font-family: monospace; font-size: 13px; letter-spacing: 1px;
+    color: #111; font-weight: 700; cursor: pointer;
+  }
+  #copy-btn:active { opacity: 0.85; }
+  #toast {
+    display: none; position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    background: #1a1a1a; border: 1px solid #c9a227; color: #c9a227;
+    padding: 10px 20px; border-radius: 6px; font-family: monospace; font-size: 12px;
+  }
+</style>
+</head>
+<body>
+<h1>PRESET EDITOR</h1>
+<p>Check stations to include in the Presets tab. Tap "Copy Array" then paste into index.html or the GitHub editor.</p>
+<input id="search" type="search" placeholder='Filter — "WKCR", "jazz", "Boston"…' autocomplete="off">
+<div id="count"></div>
+<div id="list"></div>
+<button id="copy-btn" onclick="copyArray()">Copy Array</button>
+<div id="toast">✓ Copied to clipboard</div>
+
+<script>
+// ── Load DB and current PRESETS from main app ─────────────────
+// Fetches index.html, extracts DB array and PRESETS constant.
+// Falls back to empty lists if fetch fails (e.g. opened as file://).
+
+let DB = [], PRESETS_SET = new Set();
+
+async function loadFromApp() {
+  try {
+    const text = await fetch('index.html').then(r => r.text());
+
+    // Extract PRESETS array
+    const pm = text.match(/const PRESETS = \[([^\]]+)\]/);
+    if (pm) {
+      pm[1].match(/'([^']+)'/g)?.forEach(m => PRESETS_SET.add(m.replace(/'/g,'')));
+    }
+
+    // Extract DB entries using a line-by-line approach
+    const lines = text.split('\n');
+    for (const line of lines) {
+      if (!line.trim().startsWith('{ id:') && !line.trim().startsWith('/* { id:')) continue;
+      if (line.includes('/* {')) continue; // skip commented-out stations
+      const id   = line.match(/id:'([^']+)'/)?.[1];
+      const name = line.match(/name:'([^']+)'/)?.[1];
+      const city = line.match(/city:'([^']+)'/)?.[1];
+      const state= line.match(/state:'([^']+)'/)?.[1];
+      const org  = line.match(/org:'([^']+)'/)?.[1];
+      if (id && name) DB.push({ id, name, city, state, org });
+    }
+  } catch(e) {
+    document.querySelector('p').textContent = '⚠ Could not load index.html. Serve this file from a local server (e.g. python3 -m http.server).';
+  }
+
+  renderList('');
+}
+
+function renderList(q) {
+  const list = document.getElementById('list');
+  const filtered = q
+    ? DB.filter(s => (s.name+s.city+s.org+s.id).toLowerCase().includes(q.toLowerCase()))
+    : DB;
+
+  document.getElementById('count').textContent =
+    PRESETS_SET.size + ' selected  ·  ' + filtered.length + ' shown';
+
+  list.innerHTML = '';
+  filtered.forEach(s => {
+    const checked = PRESETS_SET.has(s.id);
+    const div = document.createElement('div');
+    div.className = 'station' + (checked ? ' checked' : '');
+    div.innerHTML = `
+      <input type="checkbox" id="cb_${s.id}" ${checked ? 'checked' : ''}>
+      <div class="station-info">
+        <div class="station-name">${s.name}</div>
+        <div class="station-meta">${s.org || ''} · ${s.city || ''}, ${s.state || ''}</div>
+      </div>
+      <span class="station-id">${s.id}</span>
+    `;
+    div.addEventListener('click', (e) => {
+      if (e.target.tagName === 'INPUT') return; // handled by change below
+      document.getElementById('cb_' + s.id).click();
+    });
+    div.querySelector('input').addEventListener('change', (e) => {
+      if (e.target.checked) PRESETS_SET.add(s.id);
+      else PRESETS_SET.delete(s.id);
+      div.classList.toggle('checked', e.target.checked);
+      document.getElementById('count').textContent =
+        PRESETS_SET.size + ' selected  ·  ' + filtered.length + ' shown';
+    });
+    list.appendChild(div);
+  });
+}
+
+document.getElementById('search').addEventListener('input', e => renderList(e.target.value));
+
+function copyArray() {
+  // Preserve DB order for selected stations
+  const ordered = DB.filter(s => PRESETS_SET.has(s.id)).map(s => `'${s.id}'`);
+  const line = 'const PRESETS = [' + ordered.join(',') + '];';
+  navigator.clipboard.writeText(line).then(() => {
+    const toast = document.getElementById('toast');
+    toast.style.display = 'block';
+    setTimeout(() => toast.style.display = 'none', 2000);
+  }).catch(() => prompt('Copy this line:', line));
+}
+
+loadFromApp();
+</script>
+</body>
+</html>

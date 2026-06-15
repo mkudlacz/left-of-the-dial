@@ -251,29 +251,35 @@
   }
   .preset-tile {
     background: var(--bg2); border: 1px solid var(--border);
-    border-radius: 8px; padding: 14px 10px 12px; cursor: pointer;
-    text-align: center; transition: border-color 0.2s, background 0.2s;
+    border-radius: 8px; padding: 12px 11px 11px; cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
     -webkit-user-select: none; user-select: none;
   }
   .preset-tile:active { background: rgba(255,255,255,0.07); }
   .preset-tile.active {
-    background: linear-gradient(135deg, rgba(201,162,39,0.12), rgba(201,162,39,0.04));
+    background: linear-gradient(135deg, rgba(201,162,39,0.1), rgba(201,162,39,0.03));
     border-color: var(--amber-border);
   }
+  .tile-top {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 6px;
+  }
+  .tile-city { font-size: 10px; color: var(--text-dim); }
+  .tile-cat  {
+    font-size: 9px; color: var(--text-faint); font-family: monospace;
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
   .preset-freq {
-    font-family: monospace; font-size: 22px; font-weight: 700;
-    color: var(--amber); line-height: 1; margin-bottom: 5px;
+    font-family: monospace; font-size: 26px; font-weight: 700;
+    color: var(--amber); line-height: 1; margin-bottom: 4px;
     letter-spacing: -0.5px;
   }
   .preset-tile.active .preset-freq { text-shadow: 0 0 8px rgba(201,162,39,0.4); }
   .preset-call {
     font-size: 12px; font-weight: 700; color: var(--text);
-    letter-spacing: 1px; font-family: monospace;
+    letter-spacing: 1px; font-family: monospace; margin-bottom: 3px;
   }
-  .preset-loc {
-    font-size: 10px; color: var(--text-dim); margin-top: 3px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
+  .tile-format { font-size: 10px; color: var(--text-dim); }
 
   /* ── Share button ── */
   #share-btn {
@@ -657,22 +663,39 @@ function buildFilters() {
 // ─────────────────────────────────────────────────────────────
 const PRESETS = ['wzbc','wkcr','wfmu','wpts','wxyc','wluw','wbez','kcou','krui','kjhk','krnu','kzsc','kdvs','kxlu','kuci','kqed','kexp','wsum'];
 
-function renderPresets() {
+function getCategory(s) {
+  if (s.tags.includes('college')) return 'College';
+  if (s.tags.includes('public') || s.tags.includes('npr')) return 'Public';
+  if (s.tags.includes('community')) return 'Community';
+  return '';
+}
+
+function getFormat(s) {
+  const priority = ['jazz','classical','freeform','blues','rock','indie','news','eclectic'];
+  const match = priority.find(t => s.tags.includes(t));
+  if (match) return match.charAt(0).toUpperCase() + match.slice(1);
+  return s.genre.split(/[·,]/)[0].trim().split(' ')[0];
+}
+
+function renderTileGrid(stations) {
   const grid = document.getElementById('presets-inner');
   grid.innerHTML = '';
   const filterFn = FILTERS[state.filterIdx].fn;
-  PRESETS.forEach(id => {
-    const s = DB.find(x => x.id === id);
-    if (!s || (state.filterIdx !== 0 && !filterFn(s))) return;
+  stations.filter(s => state.filterIdx === 0 || filterFn(s)).forEach(s => {
     const isActive = state.currentId === s.id;
     const tile = document.createElement('div');
     tile.className = 'preset-tile' + (isActive ? ' active' : '');
-    // Extract numeric frequency for display
     const freq = s.freq.replace(' FM','').replace(' AM','').replace(' Web','—');
+    const cat = getCategory(s);
+    const fmt = getFormat(s);
     tile.innerHTML = `
+      <div class="tile-top">
+        <span class="tile-city">📍 ${s.city}</span>
+        ${cat ? `<span class="tile-cat">${cat}</span>` : ''}
+      </div>
       <div class="preset-freq">${freq}</div>
       <div class="preset-call">${s.id.toUpperCase()}</div>
-      <div class="preset-loc">${s.city}</div>
+      <div class="tile-format">${fmt}</div>
     `;
     tile.addEventListener('click', () => tune(s));
     grid.appendChild(tile);
@@ -720,22 +743,32 @@ function render() {
   });
   document.getElementById('fav-count').textContent = state.favs.length;
 
-  // import row (only in favs tab) + presets grid
+  // import row only in favs tab
   document.getElementById('import-row').style.display = state.tab === 'favs' ? 'flex' : 'none';
+
+  // tile grid — presets & starred
   const presetsGrid = document.getElementById('presets-grid');
   if (state.tab === 'presets') {
     presetsGrid.style.display = 'block';
-    renderPresets();
+    renderTileGrid(PRESETS.map(id => DB.find(s => s.id === id)).filter(Boolean));
+  } else if (state.tab === 'favs') {
+    presetsGrid.style.display = 'block';
+    renderTileGrid(DB.filter(s => state.favs.includes(s.id)));
   } else {
     presetsGrid.style.display = 'none';
   }
 
-  // filter row (only in browse + not search mode)
+  // filter chips — Browse and Starred only, not Presets
   const filterRow = document.getElementById('filter-row');
-  filterRow.style.display = !state.searchMode ? 'flex' : 'none';
+  filterRow.style.display = (state.tab !== 'presets' && !state.searchMode) ? 'flex' : 'none';
   buildFilters();
 
-  if (state.tab === 'presets') { document.getElementById('station-list').innerHTML = ''; document.getElementById('empty').style.display = 'none'; updateNowPlaying(); return; }
+  if (state.tab === 'presets' || state.tab === 'favs') {
+    document.getElementById('station-list').innerHTML = '';
+    document.getElementById('empty').style.display = 'none';
+    updateNowPlaying();
+    return;
+  }
   const list = getDisplayList();
   const listEl = document.getElementById('station-list');
   const emptyEl = document.getElementById('empty');
@@ -940,6 +973,7 @@ async function refreshMeta() {
   if (text) {
     state.metaCache[station.id] = text;
     setMediaSession(station, text);
+    updateNowPlaying();
   }
 }
 
@@ -1061,7 +1095,8 @@ function updateNowPlaying() {
     vu.innerHTML = [4,8,5,10,6].map((h,i) => `<span class="vu-bar" style="height:${h}px;animation-delay:${i*0.08}s"></span>`).join('');
     nameEl.appendChild(vu);
   }
-  nameEl.appendChild(document.createTextNode(s.name));
+  const meta = state.metaCache[s.id];
+  nameEl.appendChild(document.createTextNode(s.name + (meta ? '  ·  ' + meta : '')));
 
   document.getElementById('np-org').textContent = s.org + ' · ' + s.city + ', ' + s.state;
   document.getElementById('np-status').textContent =
