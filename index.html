@@ -210,7 +210,7 @@
     background: #1a2218 center/cover no-repeat;
     border: 1px solid rgba(255,255,255,0.07);
     filter: brightness(0.65) saturate(0.5);
-    margin: 0 6px 0 10px;
+    margin: 0 10px 0 0;
   }
 
   /* ── Tile star button ── */
@@ -897,6 +897,7 @@ function render() {
     card.className = 'station-card' + (isActive ? ' active' : '');
     card.innerHTML = `
       <div class="card-top">
+        <div class="card-map" data-id="${s.id}" data-city="${s.city}" data-state="${s.state}"></div>
         <div class="card-left">
           <div class="card-name-row">
             ${isActive ? '<span class="on-air-badge">ON AIR</span>' : ''}
@@ -906,7 +907,6 @@ function render() {
           <div class="card-meta">${s.org} · ${s.city}, ${s.state}</div>
           <div class="card-genre">${s.genre}</div>
         </div>
-        <div class="card-map" data-id="${s.id}" data-city="${s.city}" data-state="${s.state}"></div>
         <button class="fav-btn ${isFav ? 'saved' : ''}" data-id="${s.id}">${isFav ? '★' : '☆'}</button>
       </div>
     `;
