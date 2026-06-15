@@ -195,6 +195,36 @@
   }
   .fav-btn.saved { color: var(--amber); }
 
+  /* ── Filter collapse on scroll ── */
+  #filter-row {
+    transition: max-height 0.25s ease, opacity 0.18s, margin-top 0.25s;
+    max-height: 200px; overflow: hidden;
+  }
+  #header.filters-collapsed #filter-row {
+    max-height: 0; opacity: 0; margin-top: 0; pointer-events: none;
+  }
+
+  /* ── Browse card map ── */
+  .card-map {
+    width: 50px; height: 50px; border-radius: 5px; flex-shrink: 0;
+    background: #1a2218 center/cover no-repeat;
+    border: 1px solid rgba(255,255,255,0.07);
+    filter: brightness(0.65) saturate(0.5);
+    margin: 0 6px 0 10px;
+  }
+
+  /* ── Tile star button ── */
+  .tile-star {
+    position: absolute; top: 6px; right: 6px;
+    background: rgba(0,0,0,0.45); border: none; border-radius: 50%;
+    width: 26px; height: 26px; cursor: pointer; font-size: 14px;
+    color: rgba(255,255,255,0.5);
+    display: flex; align-items: center; justify-content: center;
+    transition: color 0.15s;
+  }
+  .tile-star.saved { color: var(--amber); }
+  .tile-map { position: relative; }
+
   /* ── Now Playing ── */
   #now-playing {
     display: none;
@@ -690,19 +720,17 @@ async function fetchTileGeo(station) {
   return tileGeoCache[key] || null;
 }
 
-function loadTileMap(stationId, city, state, mapEl) {
-  const key = city + ',' + state;
+function loadTileMap(mapId, city, stateCode, mapEl) {
+  mapEl.dataset.mapid = mapId;
+  const key = city + ',' + stateCode;
   if (tileGeoCache[key]) {
-    const { lat, lon } = tileGeoCache[key];
-    mapEl.style.backgroundImage = 'url(' + osmTileUrl(lat, lon, 11) + ')';
+    mapEl.style.backgroundImage = 'url(' + osmTileUrl(tileGeoCache[key].lat, tileGeoCache[key].lon, 11) + ')';
     return;
   }
-  const fakeStation = { city, state };
-  fetchTileGeo(fakeStation).then(loc => {
-    if (loc && document.getElementById('map_' + stationId)) {
-      document.getElementById('map_' + stationId).style.backgroundImage =
-        'url(' + osmTileUrl(loc.lat, loc.lon, 11) + ')';
-    }
+  fetchTileGeo({city, state: stateCode}).then(loc => {
+    if (!loc) return;
+    const el = document.querySelector('[data-mapid="' + mapId + '"]');
+    if (el) el.style.backgroundImage = 'url(' + osmTileUrl(loc.lat, loc.lon, 11) + ')';
   });
 }
 
@@ -737,8 +765,11 @@ function renderTileGrid(stations) {
     const isCollege = s.tags.includes('college');
     const cat = isCollege ? '' : getCategory(s);
     const fmt = getFormat(s);
+    const isFav = state.favs.includes(s.id);
     tile.innerHTML = `
-      <div class="tile-map" id="map_${s.id}"></div>
+      <div class="tile-map">
+        <button class="tile-star ${isFav ? 'saved' : ''}" data-id="${s.id}">${isFav ? '★' : '☆'}</button>
+      </div>
       <div class="tile-body">
         <div class="preset-freq">${freq}</div>
         <div class="tile-id-row">
@@ -749,11 +780,16 @@ function renderTileGrid(stations) {
         <div class="tile-format">${fmt}</div>
       </div>
     `;
+    tile.querySelector('.tile-star').addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleFav(s.id);
+      e.currentTarget.className = 'tile-star' + (state.favs.includes(s.id) ? ' saved' : '');
+      e.currentTarget.textContent = state.favs.includes(s.id) ? '★' : '☆';
+    });
     tile.addEventListener('click', () => tune(s));
     grid.appendChild(tile);
-    // Load map asynchronously
     const mapEl = tile.querySelector('.tile-map');
-    loadTileMap(s.id, s.city, s.state, mapEl);
+    loadTileMap('t_' + s.id, s.city, s.state, mapEl);
   });
 }
 
@@ -790,6 +826,15 @@ function getDisplayList() {
   }
   return list;
 }
+
+const cardMapObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    const el = entry.target;
+    loadTileMap('b_' + el.dataset.id, el.dataset.city, el.dataset.state, el);
+    cardMapObserver.unobserve(el);
+  });
+}, { rootMargin: '200px' });
 
 function render() {
   // tabs
@@ -861,6 +906,7 @@ function render() {
           <div class="card-meta">${s.org} · ${s.city}, ${s.state}</div>
           <div class="card-genre">${s.genre}</div>
         </div>
+        <div class="card-map" data-id="${s.id}" data-city="${s.city}" data-state="${s.state}"></div>
         <button class="fav-btn ${isFav ? 'saved' : ''}" data-id="${s.id}">${isFav ? '★' : '☆'}</button>
       </div>
     `;
@@ -870,6 +916,7 @@ function render() {
     });
     card.addEventListener('click', () => tune(s));
     listEl.appendChild(card);
+    cardMapObserver.observe(card.querySelector('.card-map'));
   });
 
   updateNowPlaying();
@@ -1220,6 +1267,7 @@ function switchTab(tab) {
   state.tab = tab;
   state.searchMode = false;
   state.filterIdx = 0;
+  document.getElementById('header').classList.remove('filters-collapsed');
   render();
 }
 
@@ -1258,6 +1306,12 @@ function showStatus(msg, type) {
   el.className = type || '';
   el.style.display = msg ? 'block' : 'none';
 }
+
+// Scroll: collapse filter chips when user scrolls down
+window.addEventListener('scroll', () => {
+  if (state.tab === 'presets') return;
+  document.getElementById('header').classList.toggle('filters-collapsed', window.scrollY > 40);
+}, { passive: true });
 
 // ─────────────────────────────────────────────────────────────
 // Boot
