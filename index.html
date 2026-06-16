@@ -250,7 +250,7 @@
     height: calc(100dvh - var(--header-h, 120px) - 102px);
     overflow-y: auto; position: relative;
     padding: 14px calc(16px + env(safe-area-inset-right,0px)) 14px calc(16px + env(safe-area-inset-left,0px));
-    margin-bottom: 10px;
+    margin-bottom: 10px; text-align: center;
   }
   #npe-close-wrap {
     position: sticky; top: 0; z-index: 10;
@@ -288,7 +288,7 @@
     border-radius: 3px; padding: 1px 5px;
   }
   .npe-detail { font-size: 11px; color: var(--text-dim); margin-top: 5px; line-height: 1.5; }
-  #npe-place { display: flex; gap: 10px; margin-bottom: 14px; align-items: flex-start; }
+  #npe-place { display: flex; gap: 10px; margin-bottom: 14px; align-items: flex-start; justify-content: center; text-align: left; }
   #npe-map {
     width: 80px; height: 80px; border-radius: 5px; flex-shrink: 0;
     background: #1a2218 center/cover no-repeat;
