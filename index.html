@@ -351,7 +351,9 @@
     color: var(--amber); font-weight: 700; font-size: 15px;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;
+    cursor: pointer;
   }
+  #np-name:hover { opacity: 0.8; }
   #play-stop-btn {
     width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
     background: var(--amber-dim); border: 1px solid var(--amber-border);
@@ -828,7 +830,6 @@ try { state.favs = JSON.parse(localStorage.getItem('lotd-favs') || localStorage.
 const audio = document.getElementById('audio');
 let tuneTimer = null;
 let tuningRaf = null;
-let expandTimer = null;
 
 // ─────────────────────────────────────────────────────────────
 // Tuning needle animation
@@ -1117,7 +1118,7 @@ function setMediaSession(station, metaText) {
   navigator.mediaSession.setActionHandler('pause',     () => { if (state.playing)  togglePlay(); });
   navigator.mediaSession.setActionHandler('stop',      () => {
     audio.pause(); state.playing = false; stopMeta(); clearMediaSession();
-    clearTimeout(expandTimer); hideExpandedPanel(); render();
+    hideExpandedPanel(); render();
   });
   navigator.mediaSession.setActionHandler('nexttrack', () => navigateStation(1));
   navigator.mediaSession.setActionHandler('previoustrack', () => navigateStation(-1));
@@ -1191,6 +1192,7 @@ async function showExpandedPanel(station) {
   _lockScroll();
   panel.innerHTML = `<div id="npe-scroll"><div id="npe-close-wrap"><button id="npe-close" onclick="hideExpandedPanel()">✕</button></div><div id="npe-inner"><div id="npe-loading">Loading…</div></div></div>`;
   panel.classList.add('open');
+  attachSwipeDismiss(panel.querySelector('#npe-scroll'));
 
   const [wikiStation, geo] = await Promise.all([
     fetchWikiSummary(station.id.toUpperCase())
@@ -1250,10 +1252,44 @@ async function showExpandedPanel(station) {
   }
 
   panel.innerHTML = `<div id="npe-scroll"><div id="npe-close-wrap"><button id="npe-close" onclick="hideExpandedPanel()">✕</button></div><div id="npe-inner">${inner}</div></div>`;
+  attachSwipeDismiss(panel.querySelector('#npe-scroll'));
+}
+
+function attachSwipeDismiss(scrollEl) {
+  let startY = 0, startScrollTop = 0, dragging = false;
+  const panel = document.getElementById('np-expanded');
+
+  scrollEl.addEventListener('touchstart', e => {
+    startY = e.touches[0].clientY;
+    startScrollTop = scrollEl.scrollTop;
+    dragging = false;
+  }, { passive: true });
+
+  scrollEl.addEventListener('touchmove', e => {
+    const dy = e.touches[0].clientY - startY;
+    if (!dragging && dy > 6 && scrollEl.scrollTop === 0) dragging = true;
+    if (!dragging) return;
+    e.preventDefault();
+    panel.style.transform = `translateY(${Math.max(0, dy)}px)`;
+  }, { passive: false });
+
+  scrollEl.addEventListener('touchend', e => {
+    if (!dragging) return;
+    dragging = false;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (dy > 80) {
+      panel.style.transform = '';
+      hideExpandedPanel();
+    } else {
+      panel.style.transition = 'transform 0.25s ease';
+      panel.style.transform = 'translateY(0)';
+      setTimeout(() => { panel.style.transition = ''; panel.style.transform = ''; }, 260);
+    }
+  }, { passive: true });
 }
 
 function hideExpandedPanel() {
-  clearTimeout(expandTimer);
+ 
   const panel = document.getElementById('np-expanded');
   panel.classList.remove('open');
   _unlockScroll();
@@ -1400,16 +1436,14 @@ function tune(station) {
     audio.pause();
     state.playing = false;
     stopMeta(); clearMediaSession();
-    clearTimeout(expandTimer); hideExpandedPanel();
+    hideExpandedPanel();
     render();
     return;
   }
-  const panelWasOpen = document.getElementById('np-expanded').classList.contains('open');
   state.currentId = station.id;
   state.tuning = true;
   state.playing = false;
   clearTimeout(tuneTimer);
-  clearTimeout(expandTimer);
   hideExpandedPanel();
   audio.pause();
   audio.src = station.url;
@@ -1424,7 +1458,6 @@ function tune(station) {
       setMediaSession(station, null);
       startMeta();
       enrichStation(station);
-      expandTimer = setTimeout(() => showExpandedPanel(station), panelWasOpen ? 800 : 5000);
       render();
     })
     .catch((err) => {
@@ -1443,14 +1476,14 @@ function togglePlay() {
     audio.pause();
     state.playing = false;
     stopMeta(); clearMediaSession();
-    clearTimeout(expandTimer); hideExpandedPanel();
+    hideExpandedPanel();
     render();
   } else {
     tune(s);
   }
 }
 
-audio.addEventListener('ended', () => { state.playing = false; stopMeta(); clearMediaSession(); clearTimeout(expandTimer); hideExpandedPanel(); render(); });
+audio.addEventListener('ended', () => { state.playing = false; stopMeta(); clearMediaSession(); hideExpandedPanel(); render(); });
 audio.addEventListener('error', () => {
   if (!state.currentId) return;
   const s = DB.find(x => x.id === state.currentId);
@@ -1458,7 +1491,7 @@ audio.addEventListener('error', () => {
   state.tuning = false;
   stopTuningBar();
   stopMeta(); clearMediaSession();
-  clearTimeout(expandTimer); hideExpandedPanel();
+  hideExpandedPanel();
   if (s) showStatus(`Stream error for ${s.name}. It may be offline — try visiting ${s.site} to confirm.`, 'error');
   render();
 });
@@ -1511,9 +1544,10 @@ function updateNowPlaying() {
     ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="1.5"/></svg>'
     : '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="6,3 20,12 6,21"/></svg>';
 
-  // Station name + VU meter
+  // Station name + VU meter — tap to open info panel
   const nameEl = document.getElementById('np-name');
   nameEl.innerHTML = '';
+  nameEl.onclick = state.playing ? () => showExpandedPanel(s) : null;
   if (state.playing) {
     const vu = document.createElement('span');
     vu.className = 'vu-meter';
