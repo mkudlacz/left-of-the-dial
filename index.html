@@ -363,7 +363,7 @@
 
 <div id="header">
   <div id="wordmark">
-    <div id="wm-title"><span style="color:#9e1c1c">RCD</span><span style="color:#555"> | </span><span style="color:#c9a227;font-variant:normal;font-style:italic;letter-spacing:0">Left of the Dial</span><div id="wm-led"></div></div>
+    <div id="wm-title"><span style="color:#9e1c1c">RCD</span><span style="color:#555"> • </span><span style="color:#c9a227;font-variant:normal;font-style:italic;letter-spacing:0">Left of the Dial</span><div id="wm-led"></div></div>
     <svg viewBox="0 0 390 28" width="100%" height="28" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
       <!-- Dark tuner band -->
       <rect x="0" y="4" width="390" height="16" fill="#0e0e0e"/>
@@ -696,6 +696,8 @@ const FILTERS = [
   { label:'Southwest',  fn: s => s.tags.includes('southwest') },
   { label:'Mountain',   fn: s => s.tags.includes('mountain west') },
 ];
+
+let tunerFMin = 88, tunerRange = 20;
 
 let state = {
   tab: 'presets',      // 'presets' | 'browse' | 'favs'
@@ -1248,13 +1250,13 @@ function updateNowPlaying() {
   document.getElementById('wm-led').classList.toggle('streaming', state.playing);
   const needle = document.getElementById('wm-needle');
   if (needle) {
-    let nx = 18; // default ~88.9 MHz
+    let nx = 18; // default: left of dial
     if (state.currentId) {
       const st = DB.find(s => s.id === state.currentId);
       if (st) {
         const freq = parseFloat(st.freq);
-        if (!isNaN(freq) && freq >= 88 && freq <= 108)
-          nx = Math.round((freq - 88) / 20 * 390);
+        if (!isNaN(freq))
+          nx = Math.round((freq - tunerFMin) / tunerRange * 390);
       }
     }
     needle.setAttribute('x1', nx);
@@ -1421,6 +1423,35 @@ window.addEventListener('scroll', () => {
 // ─────────────────────────────────────────────────────────────
 // Boot
 // ─────────────────────────────────────────────────────────────
+(function buildTunerSVG() {
+  const freqs = DB.map(s => parseFloat(s.freq)).filter(f => !isNaN(f) && f > 50);
+  tunerFMin = Math.floor(Math.min(...freqs)) - 1;
+  const fMax  = Math.ceil(Math.max(...freqs))  + 1;
+  tunerRange  = fMax - tunerFMin;
+  const W = 390, toX = f => Math.round((f - tunerFMin) / tunerRange * W);
+
+  let majorTicks = '', minorTicks = '', labels = '';
+  for (let f = Math.ceil(tunerFMin / 2) * 2; f <= fMax; f += 2) {
+    const x = toX(f);
+    majorTicks += `<line x1="${x}" y1="4" x2="${x}" y2="20"/>`;
+    labels     += `<text x="${x}" y="27" text-anchor="middle">${f}</text>`;
+  }
+  for (let f = Math.ceil(tunerFMin) + 1; f < fMax; f++) {
+    if (f % 2 !== 0) minorTicks += `<line x1="${toX(f)}" y1="4" x2="${toX(f)}" y2="12"/>`;
+  }
+
+  const svg = `
+    <rect x="0" y="4" width="${W}" height="16" fill="#0e0e0e"/>
+    <rect x="0" y="4" width="${W}" height="1"  fill="rgba(255,255,255,0.13)"/>
+    <rect x="0" y="19" width="${W}" height="1" fill="rgba(0,0,0,0.55)"/>
+    <g stroke="rgba(255,255,255,0.6)"  stroke-width="1">${majorTicks}</g>
+    <g stroke="rgba(255,255,255,0.3)"  stroke-width="0.7">${minorTicks}</g>
+    <g font-family="monospace" font-size="6" fill="rgba(200,195,185,0.8)">${labels}</g>
+    <line id="wm-needle" x1="18" y1="0" x2="18" y2="28" stroke="#c82020" stroke-width="1.2"/>
+  `;
+  document.querySelector('#wordmark svg').innerHTML = svg;
+})();
+
 render();
 
 // Auto-tune from shared link: #play=wkcr
