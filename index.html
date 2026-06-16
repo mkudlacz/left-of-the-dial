@@ -238,7 +238,7 @@
   /* ── Expanded now-playing panel ── */
   #np-expanded {
     position: fixed;
-    top: calc(15px + env(safe-area-inset-top, 0px));
+    top: calc(19px + env(safe-area-inset-top, 0px));
     left: 0; right: 0; bottom: 0;
     background: rgba(10,10,10,0.98); backdrop-filter: blur(8px);
     z-index: 90;
@@ -249,9 +249,11 @@
   #np-expanded.open { transform: translateY(0); pointer-events: all; }
   #npe-scroll {
     height: 100%; overflow-y: auto; position: relative;
+    display: flex; flex-direction: column;
     padding: 14px calc(16px + env(safe-area-inset-right,0px)) calc(110px + env(safe-area-inset-bottom,0px)) calc(16px + env(safe-area-inset-left,0px));
-    text-align: center; box-sizing: border-box;
+    box-sizing: border-box;
   }
+  #npe-inner { margin: auto; width: 100%; }
   #npe-close-wrap {
     position: sticky; top: 0; z-index: 10;
     display: flex; justify-content: flex-end;
@@ -288,7 +290,7 @@
     border-radius: 3px; padding: 1px 5px;
   }
   .npe-detail { font-size: 11px; color: var(--text-dim); margin-top: 5px; line-height: 1.5; }
-  #npe-place { display: flex; gap: 10px; margin-bottom: 14px; align-items: flex-start; justify-content: center; text-align: left; }
+  #npe-place { display: flex; gap: 10px; margin-bottom: 14px; align-items: flex-start; }
   #npe-map {
     width: 80px; height: 80px; border-radius: 5px; flex-shrink: 0;
     background: #1a2218 center/cover no-repeat;
@@ -1142,6 +1144,20 @@ const WX = {
 // Expanded now-playing panel
 // ─────────────────────────────────────────────────────────────
 
+let _scrollLockY = 0;
+function _lockScroll() {
+  _scrollLockY = window.scrollY;
+  document.body.style.position = 'fixed';
+  document.body.style.top = '-' + _scrollLockY + 'px';
+  document.body.style.width = '100%';
+}
+function _unlockScroll() {
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.width = '';
+  window.scrollTo(0, _scrollLockY);
+}
+
 async function fetchWikiSummary(title) {
   try {
     const r = await fetch(
@@ -1172,7 +1188,8 @@ function atmosphericLine(city, state, timezone, wx) {
 async function showExpandedPanel(station) {
   if (!state.playing || state.currentId !== station.id) return;
   const panel = document.getElementById('np-expanded');
-  panel.innerHTML = `<div id="npe-scroll"><div id="npe-close-wrap"><button id="npe-close" onclick="hideExpandedPanel()">✕</button></div><div id="npe-loading">Loading…</div></div>`;
+  _lockScroll();
+  panel.innerHTML = `<div id="npe-scroll"><div id="npe-close-wrap"><button id="npe-close" onclick="hideExpandedPanel()">✕</button></div><div id="npe-inner"><div id="npe-loading">Loading…</div></div></div>`;
   panel.classList.add('open');
 
   const [wikiStation, geo] = await Promise.all([
@@ -1196,7 +1213,6 @@ async function showExpandedPanel(station) {
   const atmos = atmosphericLine(station.city, station.state, tz, wx);
 
   let inner = '';
-  inner += `<div id="npe-close-wrap"><button id="npe-close" onclick="hideExpandedPanel()">✕</button></div>`;
 
   if (wikiStation?.thumbnail) {
     inner += `<div id="npe-hero" style="background-image:url('${wikiStation.thumbnail}')"></div>`;
@@ -1233,13 +1249,14 @@ async function showExpandedPanel(station) {
     inner += `<div id="npe-about">${sentences}</div>`;
   }
 
-  panel.innerHTML = `<div id="npe-scroll">${inner}</div>`;
+  panel.innerHTML = `<div id="npe-scroll"><div id="npe-close-wrap"><button id="npe-close" onclick="hideExpandedPanel()">✕</button></div><div id="npe-inner">${inner}</div></div>`;
 }
 
 function hideExpandedPanel() {
   clearTimeout(expandTimer);
   const panel = document.getElementById('np-expanded');
   panel.classList.remove('open');
+  _unlockScroll();
   setTimeout(() => { if (!panel.classList.contains('open')) panel.innerHTML = ''; }, 500);
 }
 
