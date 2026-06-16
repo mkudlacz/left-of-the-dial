@@ -242,12 +242,12 @@
     border-bottom: 1px solid rgba(255,255,255,0.06);
   }
   #np-expanded.open {
-    max-height: calc(100vh - 102px);
-    max-height: calc(100dvh - 102px);
+    max-height: calc(100vh - var(--header-h, 120px) - 102px);
+    max-height: calc(100dvh - var(--header-h, 120px) - 102px);
   }
   #npe-scroll {
-    height: calc(100vh - 102px);
-    height: calc(100dvh - 102px);
+    height: calc(100vh - var(--header-h, 120px) - 102px);
+    height: calc(100dvh - var(--header-h, 120px) - 102px);
     overflow-y: auto; position: relative;
     padding: 14px calc(16px + env(safe-area-inset-right,0px)) 14px calc(16px + env(safe-area-inset-left,0px));
     margin-bottom: 10px;
@@ -1607,6 +1607,7 @@ function switchTab(tab) {
   state.filterIdx = 0;
   document.getElementById('header').classList.remove('filters-collapsed');
   render();
+  requestAnimationFrame(updatePanelHeight);
 }
 
 function doSearch() {
@@ -1645,11 +1646,19 @@ function showStatus(msg, type) {
   el.style.display = msg ? 'block' : 'none';
 }
 
+function updatePanelHeight() {
+  const h = document.getElementById('header').getBoundingClientRect().height;
+  document.documentElement.style.setProperty('--header-h', Math.round(h) + 'px');
+}
+
 // Scroll: collapse filter chips when user scrolls down
 window.addEventListener('scroll', () => {
   if (state.tab === 'presets') return;
   document.getElementById('header').classList.toggle('filters-collapsed', window.scrollY > 40);
+  updatePanelHeight();
 }, { passive: true });
+
+window.addEventListener('resize', updatePanelHeight, { passive: true });
 
 // ─────────────────────────────────────────────────────────────
 // Boot
@@ -1692,6 +1701,7 @@ window.addEventListener('scroll', () => {
 })();
 
 render();
+requestAnimationFrame(updatePanelHeight);
 
 // Auto-tune from shared link: #play=wkcr
 (function() {
