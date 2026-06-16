@@ -81,10 +81,21 @@
 
   #wordmark { margin-bottom: 6px; }
   #wm-title {
+    display: flex; align-items: center;
     font-family: 'Rockwell', 'Rockwell Extra Bold', serif;
     font-size: 10px; font-variant: small-caps; letter-spacing: 1.5px;
     text-shadow: 0 1px 0 rgba(255,255,255,0.35);
     margin-bottom: 3px;
+  }
+  #wm-led {
+    margin-left: auto; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+    background: radial-gradient(circle at 35% 35%, #fcd34d, #b07d10);
+    box-shadow: 0 0 4px rgba(201,162,39,0.7);
+    transition: background 0.4s, box-shadow 0.4s;
+  }
+  #wm-led.streaming {
+    background: radial-gradient(circle at 35% 35%, #86efac, #16a34a);
+    box-shadow: 0 0 5px rgba(34,197,94,0.85);
   }
 
   #search-row { display: flex; gap: 8px; margin-bottom: 10px; margin-top: 0; }
@@ -352,7 +363,7 @@
 
 <div id="header">
   <div id="wordmark">
-    <div id="wm-title"><span style="color:#9e1c1c">RCD</span><span style="color:#555"> • </span><span style="color:#c9a227;font-variant:normal;font-style:italic;letter-spacing:0">Left of the Dial</span></div>
+    <div id="wm-title"><span style="color:#9e1c1c">RCD</span><span style="color:#555"> • </span><span style="color:#c9a227;font-variant:normal;font-style:italic;letter-spacing:0">Left of the Dial</span><div id="wm-led"></div></div>
     <svg viewBox="0 0 390 28" width="100%" height="28" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
       <!-- Dark tuner band -->
       <rect x="0" y="4" width="390" height="16" fill="#0e0e0e"/>
@@ -1234,6 +1245,7 @@ function stopTuningBar() {
 // Now Playing bar
 // ─────────────────────────────────────────────────────────────
 function updateNowPlaying() {
+  document.getElementById('wm-led').classList.toggle('streaming', state.playing);
   const bar = document.getElementById('now-playing');
   const spacer = document.getElementById('np-spacer');
   if (!state.currentId) {
