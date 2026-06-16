@@ -346,11 +346,19 @@
   }
   #share-btn:hover { color: var(--amber); border-color: var(--amber-border); }
   #share-btn.copied { color: var(--amber); border-color: var(--amber-border); }
-  #np-share-btn, #np-prev, #np-next {
+  #np-prev, #np-next {
+    width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+    background: var(--amber-dim); border: 1px solid var(--amber-border);
+    color: var(--amber); cursor: pointer; font-family: monospace; font-size: 11px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  #np-prev:hover, #np-next:hover { background: rgba(201,162,39,0.28); }
+  #np-share-btn {
     background: none; border: none; cursor: pointer; padding: 0;
     color: #666; font-family: monospace; font-size: 10px; transition: color 0.15s;
   }
-  #np-share-btn:hover, #np-prev:hover, #np-next:hover { color: var(--amber); }
+  #np-share-btn:hover { color: var(--amber); }
   #np-share-btn.copied { color: var(--amber); }
   #np-nav { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 
