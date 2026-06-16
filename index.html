@@ -80,7 +80,7 @@
   }
 
   #wordmark {
-    display: flex; align-items: center;
+    display: flex; align-items: center; gap: 10px;
     font-family: 'Rockwell', 'Rockwell Extra Bold', serif;
     font-size: 13px; font-variant: small-caps; letter-spacing: 1.5px;
     text-shadow: 0 1px 0 rgba(255,255,255,0.35);
@@ -352,7 +352,48 @@
 
 <div id="header">
   <div id="wordmark">
-    <span style="color:#9e1c1c">Redcontroldeck</span><span style="color:#555"> | </span><span style="color:#8a6410;font-variant:normal;font-style:italic;letter-spacing:0">Left of the Dial</span>
+    <span style="color:#9e1c1c">Redcontroldeck</span>
+    <svg viewBox="0 0 190 14" width="190" height="14" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
+      <!-- Band -->
+      <rect x="0" y="5" width="190" height="6" fill="#111"/>
+      <rect x="0" y="5" width="190" height="0.7" fill="rgba(255,255,255,0.14)"/>
+      <rect x="0" y="10.3" width="190" height="0.7" fill="rgba(0,0,0,0.4)"/>
+      <!-- Major ticks every 2 MHz (88–108, 9.5px/MHz) -->
+      <g stroke="rgba(255,255,255,0.55)" stroke-width="0.7">
+        <line x1="19" y1="5" x2="19" y2="10"/>  <!-- 90 -->
+        <line x1="38" y1="5" x2="38" y2="10"/>  <!-- 92 -->
+        <line x1="57" y1="5" x2="57" y2="10"/>  <!-- 94 -->
+        <line x1="76" y1="5" x2="76" y2="10"/>  <!-- 96 -->
+        <line x1="95" y1="5" x2="95" y2="10"/>  <!-- 98 -->
+        <line x1="114" y1="5" x2="114" y2="10"/> <!-- 100 -->
+        <line x1="133" y1="5" x2="133" y2="10"/> <!-- 102 -->
+        <line x1="152" y1="5" x2="152" y2="10"/> <!-- 104 -->
+        <line x1="171" y1="5" x2="171" y2="10"/> <!-- 106 -->
+      </g>
+      <!-- Minor ticks every 1 MHz -->
+      <g stroke="rgba(255,255,255,0.28)" stroke-width="0.5">
+        <line x1="10" y1="5" x2="10" y2="8"/>
+        <line x1="29" y1="5" x2="29" y2="8"/>
+        <line x1="48" y1="5" x2="48" y2="8"/>
+        <line x1="67" y1="5" x2="67" y2="8"/>
+        <line x1="86" y1="5" x2="86" y2="8"/>
+        <line x1="105" y1="5" x2="105" y2="8"/>
+        <line x1="124" y1="5" x2="124" y2="8"/>
+        <line x1="143" y1="5" x2="143" y2="8"/>
+        <line x1="162" y1="5" x2="162" y2="8"/>
+        <line x1="181" y1="5" x2="181" y2="8"/>
+      </g>
+      <!-- FM labels every 4 MHz -->
+      <g font-family="monospace" font-size="4.5" fill="rgba(255,255,255,0.75)" text-anchor="middle">
+        <text x="19" y="4.5">90</text>
+        <text x="57" y="4.5">94</text>
+        <text x="95" y="4.5">98</text>
+        <text x="133" y="4.5">102</text>
+        <text x="171" y="4.5">106</text>
+      </g>
+      <!-- Needle at 91 MHz -->
+      <line x1="28.5" y1="0" x2="28.5" y2="14" stroke="#c82020" stroke-width="0.9"/>
+    </svg>
   </div>
   <div id="search-row">
     <input id="search-input" type="search" placeholder='Search — "WKCR", "Columbia", "Seattle", "jazz"…' autocomplete="off" autocorrect="off" spellcheck="false">
