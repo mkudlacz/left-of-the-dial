@@ -352,7 +352,7 @@
   }
   #np-share-btn:hover, #np-prev:hover, #np-next:hover { color: var(--amber); }
   #np-share-btn.copied { color: var(--amber); }
-  #np-nav { display: flex; align-items: center; gap: 6px; }
+  #np-nav { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 
 
   /* ── Spacer under list for now-playing bar ── */
@@ -456,17 +456,17 @@
     <div id="np-detail">
       <div id="np-top">
         <div id="np-name">—</div>
-        <button id="play-stop-btn" onclick="togglePlay()"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="6,3 20,12 6,21"/></svg></button>
+        <div id="np-nav">
+          <button id="np-prev" onclick="navigateStation(-1)">&lt;</button>
+          <button id="play-stop-btn" onclick="togglePlay()"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="6,3 20,12 6,21"/></svg></button>
+          <button id="np-next" onclick="navigateStation(1)">&gt;</button>
+        </div>
       </div>
       <div id="np-org">—</div>
       <div id="np-ctx"></div>
       <div id="np-foot">
         <div id="np-status">—</div>
-        <div id="np-nav">
-          <button id="np-prev" onclick="navigateStation(-1)">&lt;</button>
-          <button id="np-share-btn" onclick="shareStation()" style="display:none">Share</button>
-          <button id="np-next" onclick="navigateStation(1)">&gt;</button>
-        </div>
+        <button id="np-share-btn" onclick="shareStation()" style="display:none">Share</button>
         <a id="np-link" href="#" target="_blank" rel="noreferrer"></a>
       </div>
     </div>
