@@ -197,13 +197,22 @@
     animation: vubar 0.4s ease-in-out infinite alternate;
   }
   @keyframes vubar { from { transform: scaleY(0.3); } to { transform: scaleY(1.4); } }
+  .card-callsign {
+    font-family: monospace; font-size: 17px; font-weight: 700;
+    color: var(--amber); letter-spacing: 0.5px; line-height: 1.1;
+  }
+  .card-freq { font-size: 11px; color: var(--text-faint); margin-bottom: 2px; }
   .card-name {
-    font-size: 14px; font-weight: 600; color: var(--text);
+    font-size: 13px; font-weight: 500; color: var(--text-dim);
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-  .station-card.active .card-name { color: var(--amber); }
+  .station-card.active .card-callsign { color: var(--amber); }
   .card-meta { font-size: 12px; color: var(--text-dim); }
   .card-genre { font-size: 11px; color: var(--text-faint); margin-top: 2px; }
+  #browse-proviso {
+    display: none; font-size: 12px; color: var(--text-faint);
+    padding: 0 0 14px; line-height: 1.5;
+  }
   .card-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 5px; }
   .card-tag {
     font-size: 10px; color: var(--text-faint);
@@ -450,6 +459,7 @@
     <div class="empty-label" id="empty-label">NO STATIONS FOUND</div>
     <div class="empty-hint" id="empty-hint">Try a different search term.</div>
   </div>
+  <div id="browse-proviso">Some streams may be unverified; others may consistently delight. Proceed with benign enthusiasm.</div>
   <div id="station-list"></div>
   <div id="np-spacer"></div>
 </div>
@@ -933,6 +943,7 @@ function render() {
   // import row + save-starred btn only in favs tab
   document.getElementById('import-row').style.display = state.tab === 'favs' ? 'flex' : 'none';
   document.getElementById('share-btn').style.display = state.tab === 'favs' ? '' : 'none';
+  document.getElementById('browse-proviso').style.display = state.tab === 'browse' ? 'block' : 'none';
 
   // tile grid — presets & starred
   const presetsGrid = document.getElementById('presets-grid');
@@ -990,8 +1001,10 @@ function render() {
           <div class="card-name-row">
             ${isActive ? '<span class="on-air-badge">ON AIR</span>' : ''}
             ${isActive && state.playing ? `<span class="vu-meter">${[5,9,6,11,7,8].map((h,i) => `<span class="vu-bar" style="height:${h}px;animation-delay:${i*0.07}s"></span>`).join('')}</span>` : ''}
-            <span class="card-name">${s.name}</span>
+            <span class="card-callsign">${s.id.toUpperCase()}</span>
           </div>
+          <div class="card-freq">${s.freq}</div>
+          <div class="card-name">${s.name}</div>
           <div class="card-meta">${s.org} · ${s.city}, ${s.state}</div>
           <div class="card-genre">${s.genre}</div>
         </div>
