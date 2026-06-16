@@ -235,6 +235,61 @@
     max-height: 0; opacity: 0; margin-top: 0; pointer-events: none;
   }
 
+  /* ── Expanded now-playing panel ── */
+  #np-expanded {
+    max-height: 0; overflow: hidden;
+    transition: max-height 0.45s cubic-bezier(0.4,0,0.2,1);
+  }
+  #np-expanded.open {
+    max-height: 58vh; overflow-y: auto;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 10px; padding-bottom: 6px;
+  }
+  #npe-hero {
+    width: 100%; height: 150px; border-radius: 5px; margin-bottom: 12px;
+    background: #1a1a1a center/cover no-repeat;
+    filter: brightness(0.8) saturate(0.75);
+  }
+  #npe-atmos {
+    font-size: 14px; color: var(--amber); font-style: italic;
+    line-height: 1.45; margin-bottom: 12px; letter-spacing: 0.2px;
+  }
+  #npe-station-meta { margin-bottom: 14px; }
+  .npe-callsign {
+    font-family: monospace; font-size: 18px; font-weight: 700;
+    color: var(--amber); margin-right: 7px;
+  }
+  .npe-freq { font-size: 11px; color: var(--text-faint); margin-right: 7px; }
+  .npe-tag {
+    font-size: 10px; color: var(--text-faint);
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 3px; padding: 1px 5px;
+  }
+  .npe-detail { font-size: 11px; color: var(--text-dim); margin-top: 5px; line-height: 1.5; }
+  #npe-place { display: flex; gap: 10px; margin-bottom: 14px; align-items: flex-start; }
+  #npe-map {
+    width: 80px; height: 80px; border-radius: 5px; flex-shrink: 0;
+    background: #1a2218 center/cover no-repeat;
+    border: 1px solid rgba(255,255,255,0.07);
+    filter: brightness(0.65) saturate(0.5);
+  }
+  #npe-city-info { flex: 1; min-width: 0; }
+  .npe-city-name { font-size: 13px; color: var(--text); font-weight: 600; margin-bottom: 3px; }
+  .npe-city-pop { font-size: 11px; color: var(--text-faint); margin-bottom: 5px; }
+  .npe-city-desc { font-size: 11px; color: var(--text-dim); line-height: 1.55; }
+  #npe-about {
+    font-size: 12px; color: var(--text-dim); line-height: 1.65;
+    margin-bottom: 10px; padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+  #npe-close {
+    background: none; border: none; cursor: pointer; display: block; width: 100%;
+    text-align: center; color: var(--text-faint); font-family: monospace; font-size: 10px;
+    padding: 6px 0 2px; letter-spacing: 1px; transition: color 0.15s;
+  }
+  #npe-close:hover { color: var(--amber); }
+  #npe-loading { color: var(--text-faint); font-size: 11px; font-family: monospace; padding: 8px 0; }
+
   /* ── Browse card map ── */
   .card-map {
     width: 50px; height: 50px; border-radius: 5px; flex-shrink: 0;
@@ -465,6 +520,7 @@
 </div>
 
 <div id="now-playing">
+  <div id="np-expanded"></div>
   <div id="tuning-bar">
     <div id="tuning-track"></div>
     <div id="tuning-needle"></div>
@@ -753,6 +809,7 @@ try { state.favs = JSON.parse(localStorage.getItem('lotd-favs') || localStorage.
 const audio = document.getElementById('audio');
 let tuneTimer = null;
 let tuningRaf = null;
+let expandTimer = null;
 
 // ─────────────────────────────────────────────────────────────
 // Tuning needle animation
@@ -814,7 +871,7 @@ async function fetchTileGeo(station) {
       encodeURIComponent(station.city) + '&count=5&language=en&format=json'
     ).then(r => r.json());
     const loc = (geo.results || []).find(r => r.country_code === 'US');
-    if (loc) tileGeoCache[key] = { lat: loc.latitude, lon: loc.longitude };
+    if (loc) tileGeoCache[key] = { lat: loc.latitude, lon: loc.longitude, population: loc.population || null, timezone: loc.timezone || null };
   } catch(e) {}
   return tileGeoCache[key] || null;
 }
@@ -1062,6 +1119,111 @@ const WX = {
 };
 
 // ─────────────────────────────────────────────────────────────
+// Expanded now-playing panel
+// ─────────────────────────────────────────────────────────────
+
+async function fetchWikiSummary(title) {
+  try {
+    const r = await fetch(
+      'https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(title),
+      { headers: { Accept: 'application/json' } }
+    ).then(r => r.json());
+    if (!r.extract || r.type === 'disambiguation') return null;
+    return { thumbnail: r.thumbnail?.source || null, extract: r.extract, description: r.description || null };
+  } catch(e) { return null; }
+}
+
+function atmosphericLine(city, state, timezone, wx) {
+  const now = new Date();
+  const hour = parseInt(now.toLocaleString('en-US', { timeZone: timezone, hour: 'numeric', hour12: false }), 10);
+  const day  = now.toLocaleDateString('en-US', { timeZone: timezone, weekday: 'long' });
+  const tod  = hour < 5 ? 'late night' : hour < 8 ? 'early morning' : hour < 12 ? 'morning'
+             : hour < 13 ? 'midday' : hour < 17 ? 'afternoon' : hour < 20 ? 'evening' : 'night';
+  let line = `${day} ${tod} in ${city}`;
+  if (wx) {
+    const temp = Math.round(wx.current.temperature_2m);
+    const desc = WX[wx.current.weather_code] || '';
+    line += ` · ${temp}°F`;
+    if (desc) line += ` · ${desc.toLowerCase()}`;
+  }
+  return line;
+}
+
+async function showExpandedPanel(station) {
+  if (!state.playing || state.currentId !== station.id) return;
+  const panel = document.getElementById('np-expanded');
+  panel.innerHTML = '<div id="npe-loading">Loading…</div>';
+  panel.classList.add('open');
+
+  const [wikiStation, geo] = await Promise.all([
+    fetchWikiSummary(station.id.toUpperCase())
+      .then(r => r || fetchWikiSummary(station.id.toUpperCase() + ' (radio station)')),
+    fetchTileGeo(station)
+  ]);
+
+  const [wx, cityWiki] = await Promise.all([
+    geo ? fetch(
+      'https://api.open-meteo.com/v1/forecast?latitude=' + geo.lat +
+      '&longitude=' + geo.lon +
+      '&current=temperature_2m,weather_code&temperature_unit=fahrenheit&timezone=auto&forecast_days=1'
+    ).then(r => r.json()).catch(() => null) : Promise.resolve(null),
+    fetchWikiSummary(station.city)
+  ]);
+
+  if (!state.playing || state.currentId !== station.id) return; // stale
+
+  const tz = geo?.timezone || 'America/New_York';
+  const atmos = atmosphericLine(station.city, station.state, tz, wx);
+
+  let html = '';
+
+  if (wikiStation?.thumbnail) {
+    html += `<div id="npe-hero" style="background-image:url('${wikiStation.thumbnail}')"></div>`;
+  }
+
+  html += `<div id="npe-atmos">${atmos}</div>`;
+
+  const format = getFormat(station);
+  const listeners = state.listenerCount ? ` · ${state.listenerCount.toLocaleString()} listening` : '';
+  html += `<div id="npe-station-meta">`;
+  html += `<span class="npe-callsign">${station.id.toUpperCase()}</span>`;
+  html += `<span class="npe-freq">${station.freq}</span>`;
+  if (format) html += `<span class="npe-tag">${format}</span>`;
+  html += `<div class="npe-detail">${station.org}${listeners}</div>`;
+  html += `</div>`;
+
+  if (geo) {
+    const mapUrl = osmTileUrl(geo.lat, geo.lon, 12);
+    const pop = geo.population ? geo.population.toLocaleString() : null;
+    html += `<div id="npe-place">`;
+    html += `<div id="npe-map" style="background-image:url('${mapUrl}')"></div>`;
+    html += `<div id="npe-city-info">`;
+    html += `<div class="npe-city-name">${station.city}, ${station.state}</div>`;
+    if (pop) html += `<div class="npe-city-pop">Population ${pop}</div>`;
+    if (cityWiki?.extract) {
+      const first = cityWiki.extract.split('. ')[0] + '.';
+      html += `<div class="npe-city-desc">${first}</div>`;
+    }
+    html += `</div></div>`;
+  }
+
+  if (wikiStation?.extract) {
+    const sentences = wikiStation.extract.split('. ').slice(0, 3).join('. ').trimEnd().replace(/\.+$/, '') + '.';
+    html += `<div id="npe-about">${sentences}</div>`;
+  }
+
+  html += `<button id="npe-close" onclick="hideExpandedPanel()">▼ close</button>`;
+  panel.innerHTML = html;
+}
+
+function hideExpandedPanel() {
+  clearTimeout(expandTimer);
+  const panel = document.getElementById('np-expanded');
+  panel.classList.remove('open');
+  setTimeout(() => { if (!panel.classList.contains('open')) panel.innerHTML = ''; }, 500);
+}
+
+// ─────────────────────────────────────────────────────────────
 // Station enrichment: Wikipedia image/blurb, weather, listeners
 // ─────────────────────────────────────────────────────────────
 
@@ -1201,6 +1363,7 @@ function tune(station) {
     audio.pause();
     state.playing = false;
     stopMeta(); clearMediaSession();
+    clearTimeout(expandTimer); hideExpandedPanel();
     render();
     return;
   }
@@ -1208,6 +1371,8 @@ function tune(station) {
   state.tuning = true;
   state.playing = false;
   clearTimeout(tuneTimer);
+  clearTimeout(expandTimer);
+  hideExpandedPanel();
   audio.pause();
   audio.src = station.url;
   audio.load();
@@ -1221,6 +1386,7 @@ function tune(station) {
       setMediaSession(station, null);
       startMeta();
       enrichStation(station);
+      expandTimer = setTimeout(() => showExpandedPanel(station), 15000);
       render();
     })
     .catch((err) => {
@@ -1239,13 +1405,14 @@ function togglePlay() {
     audio.pause();
     state.playing = false;
     stopMeta(); clearMediaSession();
+    clearTimeout(expandTimer); hideExpandedPanel();
     render();
   } else {
     tune(s);
   }
 }
 
-audio.addEventListener('ended', () => { state.playing = false; stopMeta(); clearMediaSession(); render(); });
+audio.addEventListener('ended', () => { state.playing = false; stopMeta(); clearMediaSession(); clearTimeout(expandTimer); hideExpandedPanel(); render(); });
 audio.addEventListener('error', () => {
   if (!state.currentId) return;
   const s = DB.find(x => x.id === state.currentId);
@@ -1253,6 +1420,7 @@ audio.addEventListener('error', () => {
   state.tuning = false;
   stopTuningBar();
   stopMeta(); clearMediaSession();
+  clearTimeout(expandTimer); hideExpandedPanel();
   if (s) showStatus(`Stream error for ${s.name}. It may be offline — try visiting ${s.site} to confirm.`, 'error');
   render();
 });
