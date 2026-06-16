@@ -45,7 +45,7 @@
       );
     border-bottom: 2px solid #787870;
     box-shadow: 0 4px 16px rgba(0,0,0,0.6);
-    padding: calc(55px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-right, 0px)) 12px calc(16px + env(safe-area-inset-left, 0px));
+    padding: calc(92px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-right, 0px)) 12px calc(16px + env(safe-area-inset-left, 0px));
   }
   /* Wood cabinet top panel */
   #header::before {
@@ -77,6 +77,21 @@
     );
     box-shadow: 0 2px 6px rgba(0,0,0,0.5);
     pointer-events: none;
+  }
+
+  #wordmark { margin-bottom: 8px; }
+  #wordmark-brand {
+    font-family: 'Rockwell', 'Rockwell Extra Bold', serif;
+    font-size: 9px; font-variant: small-caps; letter-spacing: 2.5px;
+    color: #9e1c1c;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.3);
+    margin-bottom: 2px;
+  }
+  #wordmark-title {
+    font-family: 'Rockwell', 'Rockwell Extra Bold', serif;
+    font-size: 26px; font-weight: bold; letter-spacing: 0.3px; line-height: 1;
+    color: #8a6410;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.5), 0 -1px 0 rgba(0,0,0,0.12);
   }
 
   #search-row { display: flex; gap: 8px; margin-bottom: 10px; margin-top: 0; }
@@ -343,6 +358,10 @@
 <body>
 
 <div id="header">
+  <div id="wordmark">
+    <div id="wordmark-brand">redcontroldeck</div>
+    <div id="wordmark-title">Left of the Dial</div>
+  </div>
   <div id="search-row">
     <input id="search-input" type="search" placeholder='Search — "WKCR", "Columbia", "Seattle", "jazz"…' autocomplete="off" autocorrect="off" spellcheck="false">
   </div>
