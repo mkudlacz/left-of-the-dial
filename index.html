@@ -1444,7 +1444,7 @@ window.addEventListener('scroll', () => {
 // Boot
 // ─────────────────────────────────────────────────────────────
 (function buildTunerSVG() {
-  const freqs = DB.map(s => parseFloat(s.freq)).filter(f => !isNaN(f) && f > 50);
+  const freqs = DB.map(s => parseFloat(s.freq)).filter(f => !isNaN(f) && f > 50 && f < 200);
   tunerFMin = Math.floor(Math.min(...freqs)) - 1;
   const fMax  = Math.ceil(Math.max(...freqs))  + 1;
   tunerRange  = fMax - tunerFMin;
