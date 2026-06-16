@@ -247,15 +247,21 @@
     padding: 14px calc(16px + env(safe-area-inset-right,0px)) 14px calc(16px + env(safe-area-inset-left,0px));
     margin-bottom: 10px;
   }
-  #npe-close {
-    position: absolute; top: 10px; right: calc(12px + env(safe-area-inset-right,0px));
-    width: 26px; height: 26px; border-radius: 50%; cursor: pointer;
-    background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.12);
-    color: var(--text-faint); font-size: 13px; line-height: 1;
-    display: flex; align-items: center; justify-content: center;
-    transition: color 0.15s, background 0.15s; z-index: 2;
+  #npe-close-wrap {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; justify-content: flex-end;
+    height: 0; pointer-events: none;
   }
-  #npe-close:hover { color: var(--amber); background: rgba(0,0,0,0.7); }
+  #npe-close {
+    pointer-events: all;
+    width: 34px; height: 34px; border-radius: 50%; cursor: pointer;
+    background: rgba(10,10,10,0.88); border: 1px solid rgba(255,255,255,0.18);
+    color: var(--text); font-size: 17px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    transition: color 0.15s, background 0.15s; z-index: 10;
+    margin-top: 6px;
+  }
+  #npe-close:hover { color: var(--amber); background: rgba(0,0,0,0.95); }
   #npe-hero {
     width: 100%; height: 150px; border-radius: 5px; margin-bottom: 12px;
     background: #1a1a1a center/cover no-repeat;
@@ -333,6 +339,8 @@
     color: rgba(201,162,39,0.55);
   }
   #np-detail { min-width: 0; }
+  #np-expanded.open ~ * ~ #np-card,
+  #np-expanded.open ~ #np-card { padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.07); margin-top: 0; }
   #np-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 3px; }
   #np-name {
     color: var(--amber); font-weight: 700; font-size: 15px;
@@ -1157,7 +1165,7 @@ function atmosphericLine(city, state, timezone, wx) {
 async function showExpandedPanel(station) {
   if (!state.playing || state.currentId !== station.id) return;
   const panel = document.getElementById('np-expanded');
-  panel.innerHTML = `<div id="npe-scroll"><button id="npe-close" onclick="hideExpandedPanel()">✕</button><div id="npe-loading">Loading…</div></div>`;
+  panel.innerHTML = `<div id="npe-scroll"><div id="npe-close-wrap"><button id="npe-close" onclick="hideExpandedPanel()">✕</button></div><div id="npe-loading">Loading…</div></div>`;
   panel.classList.add('open');
 
   const [wikiStation, geo] = await Promise.all([
@@ -1181,7 +1189,7 @@ async function showExpandedPanel(station) {
   const atmos = atmosphericLine(station.city, station.state, tz, wx);
 
   let inner = '';
-  inner += `<button id="npe-close" onclick="hideExpandedPanel()">✕</button>`;
+  inner += `<div id="npe-close-wrap"><button id="npe-close" onclick="hideExpandedPanel()">✕</button></div>`;
 
   if (wikiStation?.thumbnail) {
     inner += `<div id="npe-hero" style="background-image:url('${wikiStation.thumbnail}')"></div>`;
@@ -1372,6 +1380,7 @@ function tune(station) {
     render();
     return;
   }
+  const panelWasOpen = document.getElementById('np-expanded').classList.contains('open');
   state.currentId = station.id;
   state.tuning = true;
   state.playing = false;
@@ -1391,7 +1400,7 @@ function tune(station) {
       setMediaSession(station, null);
       startMeta();
       enrichStation(station);
-      expandTimer = setTimeout(() => showExpandedPanel(station), 4000);
+      expandTimer = setTimeout(() => showExpandedPanel(station), panelWasOpen ? 800 : 4000);
       render();
     })
     .catch((err) => {
