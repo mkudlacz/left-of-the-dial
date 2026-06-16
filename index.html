@@ -241,9 +241,14 @@
     transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1);
     border-bottom: 1px solid rgba(255,255,255,0.06);
   }
-  #np-expanded.open { max-height: 58vh; }
+  #np-expanded.open {
+    max-height: calc(100vh - 102px);
+    max-height: calc(100dvh - 102px);
+  }
   #npe-scroll {
-    height: 58vh; overflow-y: auto; position: relative;
+    height: calc(100vh - 102px);
+    height: calc(100dvh - 102px);
+    overflow-y: auto; position: relative;
     padding: 14px calc(16px + env(safe-area-inset-right,0px)) 14px calc(16px + env(safe-area-inset-left,0px));
     margin-bottom: 10px;
   }
@@ -1107,11 +1112,14 @@ function setMediaSession(station, metaText) {
     artwork: [{ src: 'icon.jpg', sizes: '300x300', type: 'image/jpeg' }]
   });
   navigator.mediaSession.playbackState = 'playing';
-  navigator.mediaSession.setActionHandler('play',  () => { if (!state.playing) togglePlay(); });
-  navigator.mediaSession.setActionHandler('pause', () => { if (state.playing)  togglePlay(); });
-  navigator.mediaSession.setActionHandler('stop',  () => {
-    audio.pause(); state.playing = false; stopMeta(); clearMediaSession(); render();
+  navigator.mediaSession.setActionHandler('play',      () => { if (!state.playing) togglePlay(); });
+  navigator.mediaSession.setActionHandler('pause',     () => { if (state.playing)  togglePlay(); });
+  navigator.mediaSession.setActionHandler('stop',      () => {
+    audio.pause(); state.playing = false; stopMeta(); clearMediaSession();
+    clearTimeout(expandTimer); hideExpandedPanel(); render();
   });
+  navigator.mediaSession.setActionHandler('nexttrack', () => navigateStation(1));
+  navigator.mediaSession.setActionHandler('previoustrack', () => navigateStation(-1));
 }
 
 function clearMediaSession() {
@@ -1400,7 +1408,7 @@ function tune(station) {
       setMediaSession(station, null);
       startMeta();
       enrichStation(station);
-      expandTimer = setTimeout(() => showExpandedPanel(station), panelWasOpen ? 800 : 4000);
+      expandTimer = setTimeout(() => showExpandedPanel(station), panelWasOpen ? 800 : 5000);
       render();
     })
     .catch((err) => {
