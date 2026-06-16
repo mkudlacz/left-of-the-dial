@@ -45,7 +45,7 @@
       );
     border-bottom: 2px solid #787870;
     box-shadow: 0 4px 16px rgba(0,0,0,0.6);
-    padding: calc(46px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-right, 0px)) 12px calc(16px + env(safe-area-inset-left, 0px));
+    padding: calc(32px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-right, 0px)) 12px calc(16px + env(safe-area-inset-left, 0px));
   }
   /* Wood cabinet top panel */
   #header::before {
@@ -79,14 +79,21 @@
     pointer-events: none;
   }
 
-  #wordmark {
-    display: flex; align-items: center;
-    font-family: 'Rockwell', 'Rockwell Extra Bold', serif;
-    font-size: 13px; font-variant: small-caps; letter-spacing: 1.5px;
-    text-shadow: 0 1px 0 rgba(255,255,255,0.35);
-    margin-bottom: 6px;
+  #header-watermark {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: url(poster.jpg) center 30%/65% auto no-repeat;
+    opacity: 0.06;
+    pointer-events: none;
+    mix-blend-mode: multiply;
   }
-
+  #header-dots {
+    position: absolute;
+    top: calc(21px + env(safe-area-inset-top, 0px));
+    left: 20px; right: 20px; height: 3px;
+    background-image: radial-gradient(circle, rgba(0,0,0,0.22) 1px, transparent 1px);
+    background-size: 10px 3px;
+    pointer-events: none;
+  }
 
   #search-row { display: flex; gap: 8px; margin-bottom: 10px; margin-top: 0; }
   #search-input {
@@ -352,9 +359,8 @@
 <body>
 
 <div id="header">
-  <div id="wordmark">
-    <span style="color:#9e1c1c">Redcontroldeck</span><span style="color:#555"> | </span><span style="color:#8a6410;font-variant:normal;font-style:italic;letter-spacing:0">Left of the Dial</span>
-  </div>
+  <div id="header-watermark"></div>
+  <div id="header-dots"></div>
   <div id="search-row">
     <input id="search-input" type="search" placeholder='Search — "WKCR", "Columbia", "Seattle", "jazz"…' autocomplete="off" autocorrect="off" spellcheck="false">
   </div>
