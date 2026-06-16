@@ -237,20 +237,20 @@
 
   /* ── Expanded now-playing panel ── */
   #np-expanded {
-    max-height: 0; overflow: hidden;
-    transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1);
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    position: fixed;
+    top: calc(15px + env(safe-area-inset-top, 0px));
+    left: 0; right: 0; bottom: 0;
+    background: rgba(10,10,10,0.98); backdrop-filter: blur(8px);
+    z-index: 90;
+    transform: translateY(110%);
+    transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+    pointer-events: none;
   }
-  #np-expanded.open {
-    max-height: calc(100vh - var(--header-h, 120px) - 102px);
-    max-height: calc(100dvh - var(--header-h, 120px) - 102px);
-  }
+  #np-expanded.open { transform: translateY(0); pointer-events: all; }
   #npe-scroll {
-    height: calc(100vh - var(--header-h, 120px) - 102px);
-    height: calc(100dvh - var(--header-h, 120px) - 102px);
-    overflow-y: auto; position: relative;
-    padding: 14px calc(16px + env(safe-area-inset-right,0px)) 14px calc(16px + env(safe-area-inset-left,0px));
-    margin-bottom: 10px; text-align: center;
+    height: 100%; overflow-y: auto; position: relative;
+    padding: 14px calc(16px + env(safe-area-inset-right,0px)) calc(110px + env(safe-area-inset-bottom,0px)) calc(16px + env(safe-area-inset-left,0px));
+    text-align: center; box-sizing: border-box;
   }
   #npe-close-wrap {
     position: sticky; top: 0; z-index: 10;
@@ -344,8 +344,6 @@
     color: rgba(201,162,39,0.55);
   }
   #np-detail { min-width: 0; }
-  #np-expanded.open ~ * ~ #np-card,
-  #np-expanded.open ~ #np-card { padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.07); margin-top: 0; }
   #np-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 3px; }
   #np-name {
     color: var(--amber); font-weight: 700; font-size: 15px;
@@ -537,8 +535,9 @@
   <div id="np-spacer"></div>
 </div>
 
+<div id="np-expanded"></div>
+
 <div id="now-playing">
-  <div id="np-expanded"></div>
   <div id="tuning-bar">
     <div id="tuning-track"></div>
     <div id="tuning-needle"></div>
@@ -1607,7 +1606,6 @@ function switchTab(tab) {
   state.filterIdx = 0;
   document.getElementById('header').classList.remove('filters-collapsed');
   render();
-  requestAnimationFrame(updatePanelHeight);
 }
 
 function doSearch() {
@@ -1646,19 +1644,11 @@ function showStatus(msg, type) {
   el.style.display = msg ? 'block' : 'none';
 }
 
-function updatePanelHeight() {
-  const h = document.getElementById('header').getBoundingClientRect().height;
-  document.documentElement.style.setProperty('--header-h', Math.round(h) + 'px');
-}
-
 // Scroll: collapse filter chips when user scrolls down
 window.addEventListener('scroll', () => {
   if (state.tab === 'presets') return;
   document.getElementById('header').classList.toggle('filters-collapsed', window.scrollY > 40);
-  updatePanelHeight();
 }, { passive: true });
-
-window.addEventListener('resize', updatePanelHeight, { passive: true });
 
 // ─────────────────────────────────────────────────────────────
 // Boot
@@ -1701,7 +1691,6 @@ window.addEventListener('resize', updatePanelHeight, { passive: true });
 })();
 
 render();
-requestAnimationFrame(updatePanelHeight);
 
 // Auto-tune from shared link: #play=wkcr
 (function() {
