@@ -238,13 +238,24 @@
   /* ── Expanded now-playing panel ── */
   #np-expanded {
     max-height: 0; overflow: hidden;
-    transition: max-height 0.45s cubic-bezier(0.4,0,0.2,1);
-  }
-  #np-expanded.open {
-    max-height: 58vh; overflow-y: auto;
+    transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1);
     border-bottom: 1px solid rgba(255,255,255,0.06);
-    margin-bottom: 10px; padding-bottom: 6px;
   }
+  #np-expanded.open { max-height: 58vh; }
+  #npe-scroll {
+    height: 58vh; overflow-y: auto; position: relative;
+    padding: 14px calc(16px + env(safe-area-inset-right,0px)) 14px calc(16px + env(safe-area-inset-left,0px));
+    margin-bottom: 10px;
+  }
+  #npe-close {
+    position: absolute; top: 10px; right: calc(12px + env(safe-area-inset-right,0px));
+    width: 26px; height: 26px; border-radius: 50%; cursor: pointer;
+    background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.12);
+    color: var(--text-faint); font-size: 13px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    transition: color 0.15s, background 0.15s; z-index: 2;
+  }
+  #npe-close:hover { color: var(--amber); background: rgba(0,0,0,0.7); }
   #npe-hero {
     width: 100%; height: 150px; border-radius: 5px; margin-bottom: 12px;
     background: #1a1a1a center/cover no-repeat;
@@ -282,12 +293,6 @@
     margin-bottom: 10px; padding-top: 10px;
     border-top: 1px solid rgba(255,255,255,0.05);
   }
-  #npe-close {
-    background: none; border: none; cursor: pointer; display: block; width: 100%;
-    text-align: center; color: var(--text-faint); font-family: monospace; font-size: 10px;
-    padding: 6px 0 2px; letter-spacing: 1px; transition: color 0.15s;
-  }
-  #npe-close:hover { color: var(--amber); }
   #npe-loading { color: var(--text-faint); font-size: 11px; font-family: monospace; padding: 8px 0; }
 
   /* ── Browse card map ── */
@@ -1152,7 +1157,7 @@ function atmosphericLine(city, state, timezone, wx) {
 async function showExpandedPanel(station) {
   if (!state.playing || state.currentId !== station.id) return;
   const panel = document.getElementById('np-expanded');
-  panel.innerHTML = '<div id="npe-loading">Loading…</div>';
+  panel.innerHTML = `<div id="npe-scroll"><button id="npe-close" onclick="hideExpandedPanel()">✕</button><div id="npe-loading">Loading…</div></div>`;
   panel.classList.add('open');
 
   const [wikiStation, geo] = await Promise.all([
@@ -1175,45 +1180,45 @@ async function showExpandedPanel(station) {
   const tz = geo?.timezone || 'America/New_York';
   const atmos = atmosphericLine(station.city, station.state, tz, wx);
 
-  let html = '';
+  let inner = '';
+  inner += `<button id="npe-close" onclick="hideExpandedPanel()">✕</button>`;
 
   if (wikiStation?.thumbnail) {
-    html += `<div id="npe-hero" style="background-image:url('${wikiStation.thumbnail}')"></div>`;
+    inner += `<div id="npe-hero" style="background-image:url('${wikiStation.thumbnail}')"></div>`;
   }
 
-  html += `<div id="npe-atmos">${atmos}</div>`;
+  inner += `<div id="npe-atmos">${atmos}</div>`;
 
   const format = getFormat(station);
   const listeners = state.listenerCount ? ` · ${state.listenerCount.toLocaleString()} listening` : '';
-  html += `<div id="npe-station-meta">`;
-  html += `<span class="npe-callsign">${station.id.toUpperCase()}</span>`;
-  html += `<span class="npe-freq">${station.freq}</span>`;
-  if (format) html += `<span class="npe-tag">${format}</span>`;
-  html += `<div class="npe-detail">${station.org}${listeners}</div>`;
-  html += `</div>`;
+  inner += `<div id="npe-station-meta">`;
+  inner += `<span class="npe-callsign">${station.id.toUpperCase()}</span>`;
+  inner += `<span class="npe-freq">${station.freq}</span>`;
+  if (format) inner += `<span class="npe-tag">${format}</span>`;
+  inner += `<div class="npe-detail">${station.org}${listeners}</div>`;
+  inner += `</div>`;
 
   if (geo) {
     const mapUrl = osmTileUrl(geo.lat, geo.lon, 12);
     const pop = geo.population ? geo.population.toLocaleString() : null;
-    html += `<div id="npe-place">`;
-    html += `<div id="npe-map" style="background-image:url('${mapUrl}')"></div>`;
-    html += `<div id="npe-city-info">`;
-    html += `<div class="npe-city-name">${station.city}, ${station.state}</div>`;
-    if (pop) html += `<div class="npe-city-pop">Population ${pop}</div>`;
+    inner += `<div id="npe-place">`;
+    inner += `<div id="npe-map" style="background-image:url('${mapUrl}')"></div>`;
+    inner += `<div id="npe-city-info">`;
+    inner += `<div class="npe-city-name">${station.city}, ${station.state}</div>`;
+    if (pop) inner += `<div class="npe-city-pop">Population ${pop}</div>`;
     if (cityWiki?.extract) {
       const first = cityWiki.extract.split('. ')[0] + '.';
-      html += `<div class="npe-city-desc">${first}</div>`;
+      inner += `<div class="npe-city-desc">${first}</div>`;
     }
-    html += `</div></div>`;
+    inner += `</div></div>`;
   }
 
   if (wikiStation?.extract) {
     const sentences = wikiStation.extract.split('. ').slice(0, 3).join('. ').trimEnd().replace(/\.+$/, '') + '.';
-    html += `<div id="npe-about">${sentences}</div>`;
+    inner += `<div id="npe-about">${sentences}</div>`;
   }
 
-  html += `<button id="npe-close" onclick="hideExpandedPanel()">▼ close</button>`;
-  panel.innerHTML = html;
+  panel.innerHTML = `<div id="npe-scroll">${inner}</div>`;
 }
 
 function hideExpandedPanel() {
@@ -1386,7 +1391,7 @@ function tune(station) {
       setMediaSession(station, null);
       startMeta();
       enrichStation(station);
-      expandTimer = setTimeout(() => showExpandedPanel(station), 15000);
+      expandTimer = setTimeout(() => showExpandedPanel(station), 4000);
       render();
     })
     .catch((err) => {
