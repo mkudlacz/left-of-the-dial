@@ -364,7 +364,7 @@
 
 <div id="header">
   <div id="wordmark">
-    <div id="wm-title"><span style="color:#9e1c1c">RCD</span><span style="color:#555"> • </span><span style="color:#c9a227;font-variant:normal;font-style:italic;letter-spacing:0">Left of the Dial</span><div id="wm-led"></div></div>
+    <div id="wm-title"><span style="color:#9e1c1c">RCD</span><span style="color:#555; padding:0 4px"> • </span><span style="color:#c9a227;font-variant:normal;font-style:italic;letter-spacing:0">Left of the Dial</span><span style="color:#666;font-variant:normal;font-style:normal;font-size:11px;letter-spacing:0.5px;padding-left:5px">tuner</span><div id="wm-led"></div></div>
     <svg viewBox="0 0 390 28" width="100%" height="28" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
       <!-- Dark tuner band -->
       <rect x="0" y="4" width="390" height="16" fill="#0e0e0e"/>
@@ -1451,19 +1451,27 @@ window.addEventListener('scroll', () => {
   const W = 390, toX = f => Math.round((f - tunerFMin) / tunerRange * W);
 
   let majorTicks = '', minorTicks = '', labels = '';
-  for (let f = Math.ceil(tunerFMin / 2) * 2; f <= fMax; f += 2) {
+  for (let f = Math.ceil(tunerFMin / 4) * 4; f <= fMax; f += 4) {
     const x = toX(f);
     majorTicks += `<line x1="${x}" y1="4" x2="${x}" y2="20"/>`;
     labels     += `<text x="${x}" y="27" text-anchor="middle">${f}</text>`;
   }
-  for (let f = Math.ceil(tunerFMin) + 1; f < fMax; f++) {
-    if (f % 2 !== 0) minorTicks += `<line x1="${toX(f)}" y1="4" x2="${toX(f)}" y2="12"/>`;
+  for (let f = Math.ceil(tunerFMin / 2) * 2; f <= fMax; f += 2) {
+    if (f % 4 !== 0) minorTicks += `<line x1="${toX(f)}" y1="4" x2="${toX(f)}" y2="12"/>`;
   }
 
   const svg = `
+    <defs>
+      <linearGradient id="tuner-glow" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="rgba(0,0,0,0)"/>
+        <stop offset="60%" stop-color="rgba(0,0,0,0)"/>
+        <stop offset="100%" stop-color="rgba(201,162,39,0.22)"/>
+      </linearGradient>
+    </defs>
     <rect x="0" y="4" width="${W}" height="16" fill="#0e0e0e"/>
     <rect x="0" y="4" width="${W}" height="1"  fill="rgba(255,255,255,0.13)"/>
     <rect x="0" y="19" width="${W}" height="1" fill="rgba(0,0,0,0.55)"/>
+    <rect x="0" y="4" width="${W}" height="16" fill="url(#tuner-glow)"/>
     <g stroke="rgba(255,255,255,0.6)"  stroke-width="1">${majorTicks}</g>
     <g stroke="rgba(255,255,255,0.3)"  stroke-width="0.7">${minorTicks}</g>
     <g font-family="monospace" font-size="6" fill="rgba(200,195,185,0.8)">${labels}</g>
