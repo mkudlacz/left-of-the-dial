@@ -863,7 +863,7 @@ function buildFilters() {
   // Only show chips relevant to current tab's station pool
   let pool = null;
   if (state.tab === 'presets') {
-    pool = PRESETS.map(id => DB.find(s => s.id === id)).filter(Boolean);
+    pool = sortByName(PRESETS.map(id => DB.find(s => s.id === id)).filter(Boolean));
   } else if (state.tab === 'favs') {
     pool = DB.filter(s => state.favs.includes(s.id));
   }
@@ -1070,7 +1070,7 @@ function render() {
   const presetsGrid = document.getElementById('presets-grid');
   if (state.tab === 'presets') {
     presetsGrid.style.display = 'block';
-    renderTileGrid(PRESETS.map(id => DB.find(s => s.id === id)).filter(Boolean));
+    renderTileGrid(sortByName(PRESETS.map(id => DB.find(s => s.id === id)).filter(Boolean)));
   } else if (state.tab === 'favs') {
     presetsGrid.style.display = 'block';
     renderTileGrid(sortByName(DB.filter(s => state.favs.includes(s.id))), false);
@@ -1674,7 +1674,7 @@ function importFavs() {
 function getNavList() {
   const filterFn = FILTERS[state.filterIdx].fn;
   const filtered = list => state.filterIdx === 0 ? list : list.filter(filterFn);
-  if (state.tab === 'presets') return filtered(PRESETS.map(id => DB.find(s => s.id === id)).filter(Boolean));
+  if (state.tab === 'presets') return filtered(sortByName(PRESETS.map(id => DB.find(s => s.id === id)).filter(Boolean)));
   if (state.tab === 'favs')    return filtered(sortByName(DB.filter(s => state.favs.includes(s.id))));
   return getDisplayList(); // browse / search — already filtered+sorted
 }
