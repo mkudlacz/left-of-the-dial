@@ -1747,10 +1747,6 @@ function shareStation() {
 function shareFavs() {
   if (state.favs.length === 0) { showStatus('No starred stations to share.', 'info'); return; }
   const url = location.href.split('#')[0] + '#favs=' + state.favs.join(',');
-  if (navigator.share) {
-    navigator.share({ title: 'My Left of the Dial stations', url });
-    return;
-  }
   navigator.clipboard.writeText(url).then(() => {
     const btn = document.getElementById('share-btn');
     btn.innerHTML = '✓ Copied';
