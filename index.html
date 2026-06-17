@@ -89,15 +89,15 @@
   }
   #wm-display {
     margin-left: auto; margin-right: 8px;
-    font-family: 'Courier New', monospace;
-    font-size: 13px; font-weight: 700; letter-spacing: 3px;
-    color: #5bc8ff;
-    text-shadow: 0 0 8px rgba(91,200,255,0.8), 0 0 3px rgba(91,200,255,0.5);
-    background: rgba(0,10,25,0.85);
-    border: 1px solid rgba(91,200,255,0.18);
-    border-radius: 2px; padding: 1px 7px;
-    min-width: 50px; text-align: center;
-    pointer-events: none;
+    font-family: Menlo, 'Lucida Console', Consolas, monospace;
+    font-size: 14px; font-weight: 700; letter-spacing: 0.5px;
+    color: #2ef;
+    text-shadow: 0 0 10px rgba(34,238,255,0.9), 0 0 4px rgba(34,238,255,0.65);
+    background: rgba(0,6,16,0.92);
+    border: 1px solid rgba(34,238,255,0.18);
+    border-radius: 2px; padding: 2px 8px;
+    min-width: 55px; text-align: right;
+    pointer-events: none; font-variant-numeric: tabular-nums;
   }
   #wm-led {
     width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
@@ -318,7 +318,6 @@
     margin-bottom: 10px; padding-top: 10px;
     border-top: 1px solid rgba(255,255,255,0.05);
   }
-  .npe-since { font-size: 11px; color: var(--text-faint); margin-top: 3px; font-family: monospace; letter-spacing: 0.5px; }
   #npe-rss { margin-bottom: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); }
   .npe-rss-title { font-size: 9px; color: var(--text-faint); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6px; font-family: monospace; }
   .npe-rss-item { font-size: 12px; color: var(--text-dim); margin-bottom: 5px; line-height: 1.45; }
@@ -794,6 +793,7 @@ const DB = [
 // ─────────────────────────────────────────────────────────────
 const FILTERS = [
   { label:'All',        fn: () => true },
+  { label:'Near Me',   fn: () => true, nearMe: true },
   { label:'College',    fn: s => s.tags.includes('college') },
   { label:'Public/NPR', fn: s => s.tags.includes('public') || s.tags.includes('npr') },
   { label:'Freeform',   fn: s => s.tags.includes('freeform') },
@@ -813,7 +813,6 @@ const FILTERS = [
   { label:'Midwest',    fn: s => s.tags.includes('midwest') },
   { label:'Southwest',  fn: s => s.tags.includes('southwest') },
   { label:'Mountain',   fn: s => s.tags.includes('mountain west') },
-  { label:'Near Me',   fn: () => true, nearMe: true },
 ];
 const NEAR_ME_IDX = FILTERS.findIndex(f => f.nearMe);
 
@@ -1214,6 +1213,20 @@ function _unlockScroll() {
   window.scrollTo(0, _scrollLockY);
 }
 
+async function fetchRSS(url) {
+  try {
+    const r = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(url)).then(r => r.json());
+    if (!r.contents) return null;
+    const xml = new DOMParser().parseFromString(r.contents, 'text/xml');
+    const items = [...xml.querySelectorAll('item')].slice(0, 7).map(el => ({
+      title: el.querySelector('title')?.textContent?.trim() || '',
+      link:  el.querySelector('link')?.textContent?.trim() ||
+             el.querySelector('guid')?.textContent?.trim() || '#',
+    })).filter(i => i.title);
+    return items.length ? items : null;
+  } catch(e) { return null; }
+}
+
 async function fetchWikiSummary(title) {
   try {
     const r = await fetch(
@@ -1262,8 +1275,7 @@ async function showExpandedPanel(station) {
       '&current=temperature_2m,weather_code&temperature_unit=fahrenheit&timezone=auto&forecast_days=1'
     ).then(r => r.json()).catch(() => null) : Promise.resolve(null),
     fetchWikiSummary(station.city),
-    station.rss ? fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(station.rss))
-      .then(r => r.json()).catch(() => null) : Promise.resolve(null)
+    station.rss ? fetchRSS(station.rss) : Promise.resolve(null)
   ]);
 
   if (!state.playing || state.currentId !== station.id) return; // stale
@@ -1281,12 +1293,10 @@ async function showExpandedPanel(station) {
 
   const format = getFormat(station);
   const listeners = state.listenerCount ? ` · ${state.listenerCount.toLocaleString()} listening` : '';
-  const foundYear = wikiStation?.extract?.match(/\b(1[89]\d{2}|20[012]\d)\b/)?.[1];
   inner += `<div id="npe-station-meta">`;
   inner += `<span class="npe-callsign">${station.id.toUpperCase()}</span>`;
   inner += `<span class="npe-freq">${station.freq}</span>`;
   if (format) inner += `<span class="npe-tag">${format}</span>`;
-  if (foundYear) inner += `<div class="npe-since">On air since ${foundYear}</div>`;
   inner += `<div class="npe-detail">${station.org}${listeners}</div>`;
   inner += `</div>`;
 
@@ -1310,12 +1320,11 @@ async function showExpandedPanel(station) {
     inner += `<div id="npe-about">${sentences}</div>`;
   }
 
-  if (rssData?.items?.length) {
+  if (rssData?.length) {
     inner += `<div id="npe-rss"><div class="npe-rss-title">Recent</div>`;
-    rssData.items.slice(0, 7).forEach(item => {
-      const title = (item.title || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      const link = item.link || '#';
-      inner += `<div class="npe-rss-item"><a href="${link}" target="_blank" rel="noreferrer">${title}</a></div>`;
+    rssData.forEach(item => {
+      const title = item.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      inner += `<div class="npe-rss-item"><a href="${item.link}" target="_blank" rel="noreferrer">${title}</a></div>`;
     });
     inner += `</div>`;
   }
@@ -1599,12 +1608,22 @@ function updateNowPlaying() {
   // Station dots — highlight active
   document.querySelectorAll('#wordmark svg .wm-dot').forEach(c => {
     const active = c.dataset.sid === state.currentId;
-    c.setAttribute('fill', active ? 'rgba(201,162,39,0.95)' : 'rgba(201,162,39,0.3)');
-    c.setAttribute('r', active ? '3.5' : '2.5');
+    c.setAttribute('stroke', active ? 'rgba(201,162,39,0.95)' : 'rgba(201,162,39,0.32)');
+    c.setAttribute('stroke-width', active ? '2.5' : '1.5');
   });
   // 80s alarm clock display
   const disp = document.getElementById('wm-display');
-  if (disp) disp.textContent = state.currentId ? state.currentId.toUpperCase() : '';
+  if (disp) {
+    if (state.currentId) {
+      const ds = DB.find(s => s.id === state.currentId);
+      if (ds) {
+        const f = parseFloat(ds.freq);
+        disp.textContent = isNaN(f) ? '' : ds.freq.includes('AM') ? String(Math.round(f)) : f.toFixed(1);
+      }
+    } else {
+      disp.textContent = '';
+    }
+  }
   const bar = document.getElementById('now-playing');
   const spacer = document.getElementById('np-spacer');
   if (!state.currentId) {
@@ -1799,7 +1818,8 @@ window.addEventListener('scroll', () => {
     if (f % 4 !== 0) minorTicks += `<line x1="${toX(f)}" y1="4" x2="${toX(f)}" y2="12"/>`;
   }
   DB.filter(s => { const f = parseFloat(s.freq); return !isNaN(f) && f > 50 && f < 200; }).forEach(s => {
-    stationDots += `<circle class="wm-dot" data-sid="${s.id}" cx="${toX(parseFloat(s.freq))}" cy="12" r="2.5" fill="rgba(201,162,39,0.3)"/>`;
+    const x = toX(parseFloat(s.freq));
+    stationDots += `<line class="wm-dot" data-sid="${s.id}" x1="${x}" y1="16" x2="${x}" y2="20" stroke="rgba(201,162,39,0.32)" stroke-width="1.5"/>`;
   });
 
   const svg = `
