@@ -452,6 +452,16 @@
     color: #666; font-family: monospace; font-size: 10px; transition: color 0.15s;
   }
   #np-share-btn:hover { color: var(--amber); }
+  #a2hs-banner {
+    display: none; margin-bottom: 12px;
+    background: var(--amber-dim); border: 1px solid var(--amber-border);
+    border-radius: 6px; padding: 10px 36px 10px 12px;
+    font-size: 12px; color: var(--text); line-height: 1.5; position: relative;
+  }
+  #a2hs-dismiss {
+    position: absolute; top: 8px; right: 10px;
+    background: none; border: none; color: #888; font-size: 15px; cursor: pointer; padding: 0;
+  }
   #np-share-btn.copied { color: var(--amber); }
   #np-nav { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 
@@ -522,6 +532,7 @@
 </div>
 
 <div id="content">
+  <div id="a2hs-banner">Tap <strong>↑ Share</strong> then <strong>Add to Home Screen</strong> for the best experience.<button id="a2hs-dismiss" onclick="dismissA2HS()" aria-label="Dismiss">✕</button></div>
   <div id="search-row">
     <input id="search-input" type="search" placeholder='Search — "WKCR", "Columbia", "Seattle", "jazz"…' autocomplete="off" autocorrect="off" spellcheck="false">
   </div>
@@ -1471,6 +1482,17 @@ async function icecastMeta(streamUrl) {
 }
 
 let metaTimer = null;
+let wakeLock = null;
+async function requestWakeLock() {
+  if (!('wakeLock' in navigator)) return;
+  try { wakeLock = await navigator.wakeLock.request('screen'); } catch(e) {}
+}
+function releaseWakeLock() {
+  if (wakeLock) { wakeLock.release(); wakeLock = null; }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && state.playing) requestWakeLock();
+});
 
 async function refreshMeta() {
   if (!state.playing || !state.currentId) return;
@@ -1497,6 +1519,7 @@ function startMeta() {
 function stopMeta() {
   clearInterval(metaTimer);
   clearEnrichment();
+  releaseWakeLock();
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1529,6 +1552,7 @@ function tune(station) {
       state.tuning = false;
       stopTuningBar();
       showStatus('');
+      requestWakeLock();
       setMediaSession(station, null);
       startMeta();
       enrichStation(station);
@@ -1697,6 +1721,11 @@ function navigateStation(dir) {
 function shareStation() {
   if (!state.currentId) return;
   const url = location.href.split('#')[0] + '#play=' + state.currentId;
+  const s = DB.find(x => x.id === state.currentId);
+  if (navigator.share) {
+    navigator.share({ title: s ? s.name + ' on Left of the Dial' : 'Left of the Dial', url });
+    return;
+  }
   navigator.clipboard.writeText(url).then(() => {
     const btn = document.getElementById('np-share-btn');
     btn.textContent = '✓ Copied';
@@ -1710,6 +1739,10 @@ function shareStation() {
 function shareFavs() {
   if (state.favs.length === 0) { showStatus('No starred stations to share.', 'info'); return; }
   const url = location.href.split('#')[0] + '#favs=' + state.favs.join(',');
+  if (navigator.share) {
+    navigator.share({ title: 'My Left of the Dial stations', url });
+    return;
+  }
   navigator.clipboard.writeText(url).then(() => {
     const btn = document.getElementById('share-btn');
     btn.innerHTML = '✓ Copied';
@@ -1775,6 +1808,15 @@ function showStatus(msg, type) {
   el.textContent = msg;
   el.className = type || '';
   el.style.display = msg ? 'block' : 'none';
+}
+
+// Add to Home Screen banner (iOS Safari only, not already installed, not dismissed)
+function dismissA2HS() {
+  localStorage.setItem('lotd-a2hs', '1');
+  document.getElementById('a2hs-banner').style.display = 'none';
+}
+if (/iPhone|iPad|iPod/.test(navigator.userAgent) && !window.navigator.standalone && !localStorage.getItem('lotd-a2hs')) {
+  setTimeout(() => { document.getElementById('a2hs-banner').style.display = 'block'; }, 4000);
 }
 
 // Scroll: collapse filter chips when user scrolls down
