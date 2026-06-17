@@ -79,7 +79,7 @@
     pointer-events: none;
   }
 
-  #wordmark { margin-bottom: 6px; }
+  #wordmark { margin-bottom: 6px; position: relative; }
   #wm-title {
     display: flex; align-items: center;
     font-family: 'Rockwell', 'Rockwell Extra Bold', serif;
@@ -87,8 +87,20 @@
     text-shadow: 0 1px 0 rgba(255,255,255,0.35);
     margin-bottom: 3px;
   }
+  #wm-display {
+    margin-left: auto; margin-right: 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px; font-weight: 700; letter-spacing: 3px;
+    color: #5bc8ff;
+    text-shadow: 0 0 8px rgba(91,200,255,0.8), 0 0 3px rgba(91,200,255,0.5);
+    background: rgba(0,10,25,0.85);
+    border: 1px solid rgba(91,200,255,0.18);
+    border-radius: 2px; padding: 1px 7px;
+    min-width: 50px; text-align: center;
+    pointer-events: none;
+  }
   #wm-led {
-    margin-left: auto; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+    width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
     background: radial-gradient(circle at 35% 35%, #fcd34d, #b07d10);
     box-shadow: 0 0 4px rgba(201,162,39,0.7);
     transition: background 0.4s, box-shadow 0.4s;
@@ -201,14 +213,14 @@
     font-family: monospace; font-size: 17px; font-weight: 700;
     color: var(--amber); letter-spacing: 0.5px; line-height: 1.1;
   }
-  .card-freq { font-size: 11px; color: var(--text-faint); margin-bottom: 2px; }
+  .card-freq { font-size: 12px; color: var(--text-faint); margin-bottom: 2px; }
   .card-name {
-    font-size: 13px; font-weight: 500; color: var(--text-dim);
+    font-size: 14px; font-weight: 500; color: var(--text-dim);
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .station-card.active .card-callsign { color: var(--amber); }
-  .card-meta { font-size: 12px; color: var(--text-dim); }
-  .card-genre { font-size: 11px; color: var(--text-faint); margin-top: 2px; }
+  .card-meta { font-size: 13px; color: var(--text-dim); }
+  .card-genre { font-size: 12px; color: var(--text-faint); margin-top: 2px; }
   #browse-proviso {
     display: none; font-size: 11px; color: #555;
     padding: 4px 0 6px; line-height: 1.5;
@@ -283,13 +295,13 @@
     font-family: monospace; font-size: 18px; font-weight: 700;
     color: var(--amber); margin-right: 7px;
   }
-  .npe-freq { font-size: 11px; color: var(--text-faint); margin-right: 7px; }
+  .npe-freq { font-size: 12px; color: var(--text-faint); margin-right: 7px; }
   .npe-tag {
     font-size: 10px; color: var(--text-faint);
     background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
     border-radius: 3px; padding: 1px 5px;
   }
-  .npe-detail { font-size: 11px; color: var(--text-dim); margin-top: 5px; line-height: 1.5; }
+  .npe-detail { font-size: 12px; color: var(--text-dim); margin-top: 5px; line-height: 1.5; }
   #npe-place { display: flex; gap: 10px; margin-bottom: 14px; align-items: flex-start; }
   #npe-map {
     width: 80px; height: 80px; border-radius: 5px; flex-shrink: 0;
@@ -299,14 +311,20 @@
   }
   #npe-city-info { flex: 1; min-width: 0; }
   .npe-city-name { font-size: 13px; color: var(--text); font-weight: 600; margin-bottom: 3px; }
-  .npe-city-pop { font-size: 11px; color: var(--text-faint); margin-bottom: 5px; }
-  .npe-city-desc { font-size: 11px; color: var(--text-dim); line-height: 1.55; }
+  .npe-city-pop { font-size: 12px; color: var(--text-faint); margin-bottom: 5px; }
+  .npe-city-desc { font-size: 12px; color: var(--text-dim); line-height: 1.55; }
   #npe-about {
-    font-size: 12px; color: var(--text-dim); line-height: 1.65;
+    font-size: 13px; color: var(--text-dim); line-height: 1.65;
     margin-bottom: 10px; padding-top: 10px;
     border-top: 1px solid rgba(255,255,255,0.05);
   }
-  #npe-loading { color: var(--text-faint); font-size: 11px; font-family: monospace; padding: 8px 0; }
+  .npe-since { font-size: 11px; color: var(--text-faint); margin-top: 3px; font-family: monospace; letter-spacing: 0.5px; }
+  #npe-rss { margin-bottom: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); }
+  .npe-rss-title { font-size: 9px; color: var(--text-faint); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6px; font-family: monospace; }
+  .npe-rss-item { font-size: 12px; color: var(--text-dim); margin-bottom: 5px; line-height: 1.45; }
+  .npe-rss-item a { color: var(--text-dim); text-decoration: none; }
+  .npe-rss-item a:hover { color: var(--amber); }
+  #npe-loading { color: var(--text-faint); font-size: 12px; font-family: monospace; padding: 8px 0; }
 
   /* ── Browse card map ── */
   .card-map {
@@ -456,7 +474,7 @@
 
 <div id="header">
   <div id="wordmark">
-    <div id="wm-title"><span style="color:#9e1c1c">RCD</span><span style="color:#555; padding:0 4px"> • </span><span style="color:#c9a227;font-variant:normal;font-style:italic;letter-spacing:0">Left of the Dial</span><span style="color:#666;font-variant:normal;font-style:normal;font-size:11px;letter-spacing:0.5px;padding-left:5px">tuner</span><div id="wm-led"></div></div>
+    <div id="wm-title"><span style="color:#9e1c1c">RCD</span><span style="color:#555; padding:0 4px"> • </span><span style="color:#c9a227;font-variant:normal;font-style:italic;letter-spacing:0">Left of the Dial</span><span style="color:#666;font-variant:normal;font-style:normal;font-size:11px;letter-spacing:0.5px;padding-left:5px">tuner</span><div id="wm-display"></div><div id="wm-led"></div></div>
     <svg viewBox="0 0 390 28" width="100%" height="28" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
       <!-- Dark tuner band -->
       <rect x="0" y="4" width="390" height="16" fill="#0e0e0e"/>
@@ -608,9 +626,9 @@ const DB = [
 { id:'wkcr', name:'WKCR 89.9', freq:'89.9 FM', city:'New York', state:'NY', org:'Columbia University', genre:'Jazz · Classical · Freeform', tags:['college','jazz','new york','tri-state'], url:'http://wkcr.streamguys1.com/live', site:'wkcr.org' },
 { id:'wnyu', name:'WNYU 89.1', freq:'89.1 FM', city:'New York', state:'NY', org:'NYU', genre:'Eclectic', tags:['college','eclectic','new york','tri-state'], url:'http://cinema.acs.its.nyu.edu:8000/wnyu128.mp3', site:'wnyu.org' },
 { id:'wfuv', name:'WFUV 90.7', freq:'90.7 FM', city:'New York', state:'NY', org:'Fordham University', genre:'Adult Alternative · Public', tags:['college','public','new york','tri-state'], url:'https://audio-mp3.ibiblio.org/wfuv-128.mp3', site:'wfuv.org' },
-{ id:'wnyc', name:'WNYC 93.9', freq:'93.9 FM', city:'New York', state:'NY', org:'New York Public Radio', genre:'Public Radio · NPR · News', tags:['public','npr','news','new york','tri-state'], url:'https://fm939.wnyc.org/wnycfm.aac', site:'wnyc.org' },
+{ id:'wnyc', name:'WNYC 93.9', freq:'93.9 FM', city:'New York', state:'NY', org:'New York Public Radio', genre:'Public Radio · NPR · News', tags:['public','npr','news','new york','tri-state'], url:'https://fm939.wnyc.org/wnycfm.aac', site:'wnyc.org', rss:'https://feeds.wnyc.org/wnyc-news-headlines' },
 { id:'wqxr', name:'WQXR 105.9', freq:'105.9 FM', city:'New York', state:'NY', org:'New York Public Radio', genre:'Classical', tags:['public','classical','new york','tri-state'], url:'https://stream.wqxr.org/wqxr-web', site:'wqxr.org' },
-{ id:'wfmu', name:'WFMU 91.1', freq:'91.1 FM', city:'Jersey City', state:'NJ', org:'Auricle Communications', genre:'Freeform · Eclectic', tags:['freeform','community','new york','tri-state'], url:'https://stream0.wfmu.org/freeform-128k', site:'wfmu.org' },
+{ id:'wfmu', name:'WFMU 91.1', freq:'91.1 FM', city:'Jersey City', state:'NJ', org:'Auricle Communications', genre:'Freeform · Eclectic', tags:['freeform','community','new york','tri-state'], url:'https://stream0.wfmu.org/freeform-128k', site:'wfmu.org', rss:'https://www.wfmu.org/rss.xml' },
 { id:'wprb', name:'WPRB 103.3', freq:'103.3 FM', city:'Princeton', state:'NJ', org:'Princeton University', genre:'Freeform · Classical', tags:['college','freeform','classical','tri-state'], url:'https://wprb.com/stream.mp3', site:'wprb.com' },
 /* { id:'wsou', name:'WSOU 89.5', freq:'89.5 FM', city:'South Orange', state:'NJ', org:'Seton Hall University', genre:'Hard Rock · Metal', tags:['college','rock','tri-state'], url:'https://wsou.net:8000/wsou.mp3', site:'wsou.net' }, */
 { id:'wrsu', name:'WRSU 88.7', freq:'88.7 FM', city:'New Brunswick', state:'NJ', org:'Rutgers University', genre:'Freeform', tags:['college','freeform','tri-state'], url:'https://wrsu-libstrm.radioca.st/stream', site:'wrsu.rutgers.edu' },
@@ -795,7 +813,9 @@ const FILTERS = [
   { label:'Midwest',    fn: s => s.tags.includes('midwest') },
   { label:'Southwest',  fn: s => s.tags.includes('southwest') },
   { label:'Mountain',   fn: s => s.tags.includes('mountain west') },
+  { label:'Near Me',   fn: () => true, nearMe: true },
 ];
+const NEAR_ME_IDX = FILTERS.findIndex(f => f.nearMe);
 
 let tunerFMin = 88, tunerRange = 20;
 
@@ -810,6 +830,8 @@ let state = {
   favs: [],
   metaCache: {},
   listenerCount: null,
+  userGeo: null,       // {lat, lon} from Geolocation API
+  distCache: {},       // station.id → miles from userGeo
 };
 
 try { state.favs = JSON.parse(localStorage.getItem('lotd-favs') || localStorage.getItem('freeform-favs') || '[]'); } catch(e) {}
@@ -864,12 +886,42 @@ function buildFilters() {
     const btn = document.createElement('button');
     btn.className = 'filter-chip' + (i === state.filterIdx ? ' active' : '');
     btn.textContent = f.label;
-    btn.onclick = () => { state.filterIdx = i; state.searchMode = false; render(); };
+    btn.onclick = f.nearMe ? () => {
+      state.filterIdx = i; state.searchMode = false;
+      if (!state.userGeo) {
+        navigator.geolocation.getCurrentPosition(
+          pos => { state.userGeo = { lat: pos.coords.latitude, lon: pos.coords.longitude }; resolveNearMeDistances(); },
+          () => { showStatus('Location access denied. Enable it in your browser settings.', 'error'); state.filterIdx = 0; render(); }
+        );
+      } else {
+        resolveNearMeDistances();
+      }
+      render();
+    } : () => { state.filterIdx = i; state.searchMode = false; render(); };
     row.appendChild(btn);
   });
 }
 
 
+
+// ── Haversine distance (miles) ────────────────────────────────
+function haversineMiles(lat1, lon1, lat2, lon2) {
+  const R = 3958.8;
+  const dLat = (lat2-lat1)*Math.PI/180, dLon = (lon2-lon1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+async function resolveNearMeDistances() {
+  if (!state.userGeo) return;
+  await Promise.all(DB.map(async s => {
+    const geo = await fetchTileGeo(s);
+    if (geo && state.userGeo) {
+      state.distCache[s.id] = haversineMiles(state.userGeo.lat, state.userGeo.lon, geo.lat, geo.lon);
+    }
+  }));
+  render();
+}
 
 // ── OSM map tile helper for station tiles ─────────────────────
 const tileGeoCache = {}; // city+state → {lat, lon}
@@ -998,6 +1050,9 @@ function getDisplayList() {
       (state.metaCache[s.id] || '').toLowerCase().includes(q)
     );
   }
+  if (state.filterIdx === NEAR_ME_IDX && state.userGeo) {
+    return [...list].sort((a, b) => (state.distCache[a.id] ?? Infinity) - (state.distCache[b.id] ?? Infinity));
+  }
   return sortByName(list);
 }
 
@@ -1082,7 +1137,7 @@ function render() {
           </div>
           <div class="card-freq">${s.freq}</div>
           <div class="card-name">${s.name}</div>
-          <div class="card-meta">${s.org} · ${s.city}, ${s.state}</div>
+          <div class="card-meta">${s.org} · ${s.city}, ${s.state}${FILTERS[state.filterIdx]?.nearMe && state.distCache[s.id] != null ? ' · ' + Math.round(state.distCache[s.id]) + ' mi' : ''}</div>
           <div class="card-genre">${s.genre}</div>
         </div>
         <button class="fav-btn ${isFav ? 'saved' : ''}" data-id="${s.id}">${isFav ? '★' : '☆'}</button>
@@ -1200,13 +1255,15 @@ async function showExpandedPanel(station) {
     fetchTileGeo(station)
   ]);
 
-  const [wx, cityWiki] = await Promise.all([
+  const [wx, cityWiki, rssData] = await Promise.all([
     geo ? fetch(
       'https://api.open-meteo.com/v1/forecast?latitude=' + geo.lat +
       '&longitude=' + geo.lon +
       '&current=temperature_2m,weather_code&temperature_unit=fahrenheit&timezone=auto&forecast_days=1'
     ).then(r => r.json()).catch(() => null) : Promise.resolve(null),
-    fetchWikiSummary(station.city)
+    fetchWikiSummary(station.city),
+    station.rss ? fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(station.rss))
+      .then(r => r.json()).catch(() => null) : Promise.resolve(null)
   ]);
 
   if (!state.playing || state.currentId !== station.id) return; // stale
@@ -1224,10 +1281,12 @@ async function showExpandedPanel(station) {
 
   const format = getFormat(station);
   const listeners = state.listenerCount ? ` · ${state.listenerCount.toLocaleString()} listening` : '';
+  const foundYear = wikiStation?.extract?.match(/\b(1[89]\d{2}|20[012]\d)\b/)?.[1];
   inner += `<div id="npe-station-meta">`;
   inner += `<span class="npe-callsign">${station.id.toUpperCase()}</span>`;
   inner += `<span class="npe-freq">${station.freq}</span>`;
   if (format) inner += `<span class="npe-tag">${format}</span>`;
+  if (foundYear) inner += `<div class="npe-since">On air since ${foundYear}</div>`;
   inner += `<div class="npe-detail">${station.org}${listeners}</div>`;
   inner += `</div>`;
 
@@ -1249,6 +1308,16 @@ async function showExpandedPanel(station) {
   if (wikiStation?.extract) {
     const sentences = wikiStation.extract.split('. ').slice(0, 3).join('. ').trimEnd().replace(/\.+$/, '') + '.';
     inner += `<div id="npe-about">${sentences}</div>`;
+  }
+
+  if (rssData?.items?.length) {
+    inner += `<div id="npe-rss"><div class="npe-rss-title">Recent</div>`;
+    rssData.items.slice(0, 7).forEach(item => {
+      const title = (item.title || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const link = item.link || '#';
+      inner += `<div class="npe-rss-item"><a href="${link}" target="_blank" rel="noreferrer">${title}</a></div>`;
+    });
+    inner += `</div>`;
   }
 
   panel.innerHTML = `<div id="npe-scroll"><div id="npe-close-wrap"><button id="npe-close" onclick="hideExpandedPanel()">✕</button></div><div id="npe-inner">${inner}</div></div>`;
@@ -1527,6 +1596,15 @@ function updateNowPlaying() {
     needle.setAttribute('x1', nx);
     needle.setAttribute('x2', nx);
   }
+  // Station dots — highlight active
+  document.querySelectorAll('#wordmark svg .wm-dot').forEach(c => {
+    const active = c.dataset.sid === state.currentId;
+    c.setAttribute('fill', active ? 'rgba(201,162,39,0.95)' : 'rgba(201,162,39,0.3)');
+    c.setAttribute('r', active ? '3.5' : '2.5');
+  });
+  // 80s alarm clock display
+  const disp = document.getElementById('wm-display');
+  if (disp) disp.textContent = state.currentId ? state.currentId.toUpperCase() : '';
   const bar = document.getElementById('now-playing');
   const spacer = document.getElementById('np-spacer');
   if (!state.currentId) {
@@ -1711,7 +1789,7 @@ window.addEventListener('scroll', () => {
   tunerRange  = fMax - tunerFMin;
   const W = 390, toX = f => Math.round((f - tunerFMin) / tunerRange * W);
 
-  let majorTicks = '', minorTicks = '', labels = '';
+  let majorTicks = '', minorTicks = '', labels = '', stationDots = '';
   for (let f = Math.ceil(tunerFMin / 4) * 4; f <= fMax; f += 4) {
     const x = toX(f);
     majorTicks += `<line x1="${x}" y1="4" x2="${x}" y2="20"/>`;
@@ -1720,6 +1798,9 @@ window.addEventListener('scroll', () => {
   for (let f = Math.ceil(tunerFMin / 2) * 2; f <= fMax; f += 2) {
     if (f % 4 !== 0) minorTicks += `<line x1="${toX(f)}" y1="4" x2="${toX(f)}" y2="12"/>`;
   }
+  DB.filter(s => { const f = parseFloat(s.freq); return !isNaN(f) && f > 50 && f < 200; }).forEach(s => {
+    stationDots += `<circle class="wm-dot" data-sid="${s.id}" cx="${toX(parseFloat(s.freq))}" cy="12" r="2.5" fill="rgba(201,162,39,0.3)"/>`;
+  });
 
   const svg = `
     <defs>
@@ -1736,6 +1817,7 @@ window.addEventListener('scroll', () => {
     <g stroke="rgba(255,255,255,0.6)"  stroke-width="1">${majorTicks}</g>
     <g stroke="rgba(255,255,255,0.3)"  stroke-width="0.7">${minorTicks}</g>
     <g font-family="monospace" font-size="6" fill="rgba(200,195,185,0.8)">${labels}</g>
+    <g>${stationDots}</g>
     <line id="wm-needle" x1="18" y1="0" x2="18" y2="28" stroke="#c82020" stroke-width="1.2"/>
   `;
   document.querySelector('#wordmark svg').innerHTML = svg;
