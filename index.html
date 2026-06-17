@@ -97,6 +97,10 @@
     background: radial-gradient(circle at 35% 35%, #86efac, #16a34a);
     box-shadow: 0 0 5px rgba(34,197,94,0.85);
   }
+  #wm-led.error {
+    background: radial-gradient(circle at 35% 35%, #fca5a5, #c82020);
+    box-shadow: 0 0 5px rgba(200,32,32,0.85);
+  }
 
   #search-row { display: flex; gap: 8px; margin-bottom: 10px; margin-top: 0; }
   #search-input {
@@ -131,7 +135,7 @@
   }
 
   /* ── Content ── */
-  #content { background: #111; padding: 12px 16px 0; max-width: 700px; margin: 0 auto; }
+  #content { background: #111; padding: 12px 16px 0; max-width: 480px; margin: 0 auto; }
 
   /* ── Import row (Starred tab) ── */
   #import-row { display: none; gap: 8px; margin-bottom: 12px; }
@@ -511,7 +515,7 @@
   <div id="tabs">
     <button class="tab-btn active" data-tab="presets" onclick="switchTab('presets')">Presets</button>
     <button class="tab-btn" data-tab="browse" onclick="switchTab('browse')">Browse</button>
-    <button class="tab-btn" data-tab="favs" onclick="switchTab('favs')"><span style="font-size:17px;line-height:1;vertical-align:middle">★</span><span style="font-size:10px;margin-left:3px;vertical-align:middle">(<span id="fav-count">0</span>)</span></button>
+    <button class="tab-btn" data-tab="favs" onclick="switchTab('favs')"><span style="font-size:15px;vertical-align:-2px">★</span><span style="font-size:10px;margin-left:2px;vertical-align:baseline">(<span id="fav-count">0</span>)</span></button>
     <button id="share-btn" onclick="shareFavs()" title="Copy shareable link to starred stations">Save</button>
   </div>
   <div id="filter-row" id="filter-row"></div>
@@ -1500,6 +1504,7 @@ function stopMeta() {
 // ─────────────────────────────────────────────────────────────
 function tune(station) {
   showStatus('');
+  document.getElementById('wm-led').classList.remove('error');
   if (state.currentId === station.id && state.playing) {
     audio.pause();
     state.playing = false;
@@ -1531,6 +1536,7 @@ function tune(station) {
     .catch((err) => {
       state.tuning = false;
       stopTuningBar();
+      document.getElementById('wm-led').classList.add('error');
       showStatus(`Couldn't connect to ${station.name}. The stream may be offline or require a different app. Try visiting ${station.site} directly.`, 'error');
       render();
     });
@@ -1560,6 +1566,7 @@ audio.addEventListener('error', () => {
   stopTuningBar();
   stopMeta(); clearMediaSession();
   hideExpandedPanel();
+  document.getElementById('wm-led').classList.add('error');
   if (s) showStatus(`Stream error for ${s.name}. It may be offline — try visiting ${s.site} to confirm.`, 'error');
   render();
 });
