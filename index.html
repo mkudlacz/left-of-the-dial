@@ -452,15 +452,24 @@
     color: #666; font-family: monospace; font-size: 10px; transition: color 0.15s;
   }
   #np-share-btn:hover { color: var(--amber); }
-  #a2hs-banner {
-    display: none; margin-bottom: 12px;
-    background: var(--amber-dim); border: 1px solid var(--amber-border);
-    border-radius: 6px; padding: 10px 36px 10px 12px;
-    font-size: 12px; color: var(--text); line-height: 1.5; position: relative;
+  #a2hs-overlay {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center; padding: 24px;
   }
-  #a2hs-dismiss {
-    position: absolute; top: 8px; right: 10px;
-    background: none; border: none; color: #888; font-size: 15px; cursor: pointer; padding: 0;
+  #a2hs-overlay.visible { display: flex; }
+  #a2hs-card {
+    background: #1e1e1e; border: 1px solid var(--amber-border);
+    border-radius: 12px; padding: 24px 24px 20px; max-width: 320px;
+    text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  }
+  #a2hs-card p { font-size: 14px; color: var(--text); line-height: 1.6; margin: 0 0 18px; }
+  #a2hs-card .share-icon { display: inline-block; vertical-align: -3px; margin: 0 2px; }
+  #a2hs-card button {
+    background: var(--amber-dim); border: 1px solid var(--amber-border);
+    border-radius: 6px; padding: 8px 20px; color: var(--amber);
+    font-family: monospace; font-size: 12px; letter-spacing: 1px;
+    text-transform: uppercase; cursor: pointer;
   }
   #np-share-btn.copied { color: var(--amber); }
   #np-nav { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
@@ -532,7 +541,6 @@
 </div>
 
 <div id="content">
-  <div id="a2hs-banner">Tap <strong>↑ Share</strong> then <strong>Add to Home Screen</strong> for the best experience.<button id="a2hs-dismiss" onclick="dismissA2HS()" aria-label="Dismiss">✕</button></div>
   <div id="search-row">
     <input id="search-input" type="search" placeholder='Search — "WKCR", "Columbia", "Seattle", "jazz"…' autocomplete="off" autocorrect="off" spellcheck="false">
   </div>
@@ -1813,10 +1821,10 @@ function showStatus(msg, type) {
 // Add to Home Screen banner (iOS Safari only, not already installed, not dismissed)
 function dismissA2HS() {
   localStorage.setItem('lotd-a2hs', '1');
-  document.getElementById('a2hs-banner').style.display = 'none';
+  document.getElementById('a2hs-overlay').classList.remove('visible');
 }
 if (/iPhone|iPad|iPod/.test(navigator.userAgent) && !window.navigator.standalone && !localStorage.getItem('lotd-a2hs')) {
-  setTimeout(() => { document.getElementById('a2hs-banner').style.display = 'block'; }, 4000);
+  setTimeout(() => { document.getElementById('a2hs-overlay').classList.add('visible'); }, 2000);
 }
 
 // Scroll: collapse filter chips when user scrolls down
@@ -1886,6 +1894,13 @@ render();
   } catch(e) {}
 })();
 </script>
+
+<div id="a2hs-overlay">
+  <div id="a2hs-card">
+    <p>On iOS, tap <svg class="share-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/><polyline points="16,6 12,2 8,6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> <strong>Share</strong> and <strong>Add to Home Screen</strong> to turn this page into an app on your phone.</p>
+    <button onclick="dismissA2HS()">Got it</button>
+  </div>
+</div>
 
 </body>
 </html>
