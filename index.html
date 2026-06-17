@@ -79,11 +79,6 @@
     pointer-events: none;
   }
 
-  #wm-title {
-    font-family: Rockwell, 'Rockwell Nova', Georgia, serif;
-    font-size: 13px; letter-spacing: 0.5px;
-    margin-bottom: 3px;
-  }
   #wordmark {
     margin-bottom: 6px; position: relative;
     border: 1.5px solid #888;
@@ -470,7 +465,6 @@
 
 <div id="header">
   <div id="wordmark">
-    <div id="wm-title"><span style="color:var(--amber)">⌘</span><span style="color:#9e1c1c"> RCD</span></div>
     <svg viewBox="0 0 390 28" width="100%" height="28" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
       <!-- Dark tuner band -->
       <rect x="0" y="4" width="390" height="16" fill="#0e0e0e"/>
@@ -521,7 +515,7 @@
   <div id="tabs">
     <button class="tab-btn active" data-tab="presets" onclick="switchTab('presets')">Presets</button>
     <button class="tab-btn" data-tab="browse" onclick="switchTab('browse')">Browse</button>
-    <button class="tab-btn" data-tab="favs" onclick="switchTab('favs')"><span style="font-size:15px;vertical-align:-2px">★</span><span style="font-size:10px;margin-left:2px;vertical-align:baseline">(<span id="fav-count">0</span>)</span></button>
+    <button class="tab-btn" data-tab="favs" onclick="switchTab('favs')"><span style="font-size:15px;vertical-align:2px">★</span><span style="font-size:10px;margin-left:2px;vertical-align:baseline">(<span id="fav-count">0</span>)</span></button>
     <button id="share-btn" onclick="shareFavs()" title="Copy shareable link to starred stations">Save</button>
   </div>
   <div id="filter-row" id="filter-row"></div>
@@ -1534,6 +1528,7 @@ function tune(station) {
       state.playing = true;
       state.tuning = false;
       stopTuningBar();
+      showStatus('');
       setMediaSession(station, null);
       startMeta();
       enrichStation(station);
