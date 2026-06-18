@@ -827,7 +827,8 @@ const FILTERS = [
 ];
 const NEAR_ME_IDX = FILTERS.findIndex(f => f.nearMe);
 
-let tunerFMin = 88, tunerRange = 20;
+let tunerFMin = 88, tunerRange = 20, tunerAmMin = 700, tunerAmRange = 600;
+const TUNER_W_FM = 268, TUNER_AM_S = 272, TUNER_AM_E = 376;
 
 let state = {
   tab: 'presets',      // 'presets' | 'browse' | 'favs'
@@ -1628,8 +1629,12 @@ function updateNowPlaying() {
       const st = DB.find(s => s.id === state.currentId);
       if (st) {
         const freq = parseFloat(st.freq);
-        if (!isNaN(freq))
-          nx = Math.round((freq - tunerFMin) / tunerRange * 390);
+        if (!isNaN(freq)) {
+          if (freq < 200)
+            nx = Math.round((freq - tunerFMin) / tunerRange * TUNER_W_FM);
+          else
+            nx = Math.round((freq - tunerAmMin) / tunerAmRange * (TUNER_AM_E - TUNER_AM_S)) + TUNER_AM_S;
+        }
       }
     }
     needle.setAttribute('x1', nx);
@@ -1833,23 +1838,51 @@ window.addEventListener('scroll', () => {
 // Boot
 // ─────────────────────────────────────────────────────────────
 (function buildTunerSVG() {
-  const freqs = DB.map(s => parseFloat(s.freq)).filter(f => !isNaN(f) && f > 50 && f < 200);
-  tunerFMin = Math.floor(Math.min(...freqs)) - 1;
-  const fMax  = Math.ceil(Math.max(...freqs))  + 1;
-  tunerRange  = fMax - tunerFMin;
-  const W = 390, toX = f => Math.round((f - tunerFMin) / tunerRange * W);
+  const W = 390;
 
+  // FM range (same logic: floor(min)-1 to ceil(max)+1)
+  const fmFreqs = DB.map(s => parseFloat(s.freq)).filter(f => !isNaN(f) && f > 50 && f < 200);
+  tunerFMin  = Math.floor(Math.min(...fmFreqs)) - 1;
+  const fMax = Math.ceil(Math.max(...fmFreqs))  + 1;
+  tunerRange = fMax - tunerFMin;
+  const toXFM = f => Math.round((f - tunerFMin) / tunerRange * TUNER_W_FM);
+
+  // AM range (same logic: floor(min)-50 to ceil(max)+50)
+  const amFreqs = DB.map(s => parseFloat(s.freq)).filter(f => !isNaN(f) && f > 200);
+  tunerAmMin    = Math.floor(Math.min(...amFreqs)) - 50;
+  const amMax   = Math.ceil(Math.max(...amFreqs))  + 50;
+  tunerAmRange  = amMax - tunerAmMin;
+  const toXAM = f => Math.round((f - tunerAmMin) / tunerAmRange * (TUNER_AM_E - TUNER_AM_S)) + TUNER_AM_S;
+
+  // FM ticks + labels
   let majorTicks = '', minorTicks = '', labels = '', stationDots = '';
   for (let f = Math.ceil(tunerFMin / 4) * 4; f <= fMax; f += 4) {
-    const x = toX(f);
+    const x = toXFM(f);
     majorTicks += `<line x1="${x}" y1="4" x2="${x}" y2="20"/>`;
     labels     += `<text x="${x}" y="27" text-anchor="middle">${f}</text>`;
   }
   for (let f = Math.ceil(tunerFMin / 2) * 2; f <= fMax; f += 2) {
-    if (f % 4 !== 0) minorTicks += `<line x1="${toX(f)}" y1="4" x2="${toX(f)}" y2="12"/>`;
+    if (f % 4 !== 0) minorTicks += `<line x1="${toXFM(f)}" y1="4" x2="${toXFM(f)}" y2="12"/>`;
   }
+
+  // AM ticks + labels (major every 100 kHz, label every 200 kHz)
+  for (let f = Math.ceil(tunerAmMin / 100) * 100; f <= amMax; f += 100) {
+    const x = toXAM(f);
+    majorTicks += `<line x1="${x}" y1="4" x2="${x}" y2="20"/>`;
+    if (f % 200 === 0) labels += `<text x="${x}" y="27" text-anchor="middle">${f}</text>`;
+  }
+  for (let f = Math.ceil(tunerAmMin / 50) * 50; f <= amMax; f += 50) {
+    if (f % 100 !== 0) minorTicks += `<line x1="${toXAM(f)}" y1="4" x2="${toXAM(f)}" y2="12"/>`;
+  }
+
+  // FM station dots
   DB.filter(s => { const f = parseFloat(s.freq); return !isNaN(f) && f > 50 && f < 200; }).forEach(s => {
-    const x = toX(parseFloat(s.freq));
+    const x = toXFM(parseFloat(s.freq));
+    stationDots += `<line class="wm-dot" data-sid="${s.id}" x1="${x}" y1="16" x2="${x}" y2="20" stroke="rgba(201,162,39,0.32)" stroke-width="1.5"/>`;
+  });
+  // AM station dots
+  DB.filter(s => { const f = parseFloat(s.freq); return !isNaN(f) && f > 200; }).forEach(s => {
+    const x = toXAM(parseFloat(s.freq));
     stationDots += `<line class="wm-dot" data-sid="${s.id}" x1="${x}" y1="16" x2="${x}" y2="20" stroke="rgba(201,162,39,0.32)" stroke-width="1.5"/>`;
   });
 
@@ -1868,6 +1901,7 @@ window.addEventListener('scroll', () => {
     <g stroke="rgba(255,255,255,0.6)"  stroke-width="1">${majorTicks}</g>
     <g stroke="rgba(255,255,255,0.3)"  stroke-width="0.7">${minorTicks}</g>
     <g font-family="monospace" font-size="6" fill="rgba(200,195,185,0.8)">${labels}</g>
+    <circle cx="${TUNER_AM_S - 1}" cy="12" r="1.5" fill="rgba(255,255,255,0.45)"/>
     <g>${stationDots}</g>
     <line id="wm-needle" x1="18" y1="0" x2="18" y2="28" stroke="#c82020" stroke-width="1.2"/>
   `;
