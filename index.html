@@ -132,7 +132,7 @@
   #discover-btn {
     margin-left: auto; background: none; border: none; cursor: pointer;
     display: flex; flex-direction: row; align-items: center; gap: 6px;
-    padding: 2px 0; opacity: 0.8; transition: opacity 0.15s; flex-shrink: 0;
+    padding: 0; opacity: 0.8; transition: opacity 0.15s; flex-shrink: 0;
   }
   #discover-btn:hover { opacity: 1; }
   #discover-btn span {
@@ -555,8 +555,7 @@
     <button class="tab-btn" data-tab="browse" onclick="switchTab('browse')">Browse</button>
     <button class="tab-btn" data-tab="favs" onclick="switchTab('favs')"><span style="font-size:15px;vertical-align:0">★</span><span style="font-size:10px;margin-left:2px;vertical-align:baseline">(<span id="fav-count">0</span>)</span></button>
     <button id="discover-btn" onclick="discover()" title="Tune to a random station">
-      <span>Tune</span>
-      <svg viewBox="0 0 24 24" width="28" height="28">
+      <svg viewBox="0 0 24 24" width="32" height="32">
         <defs>
           <radialGradient id="dial-grad" cx="38%" cy="35%" r="65%">
             <stop offset="0%" stop-color="#e8e6e0"/>
