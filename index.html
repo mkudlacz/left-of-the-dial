@@ -79,16 +79,6 @@
     pointer-events: none;
   }
 
-  #wm-top {
-    display: flex; justify-content: flex-end;
-    padding-right: 2px; margin-bottom: 4px;
-  }
-  #wm-led {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: radial-gradient(circle at 35% 35%, #fcd34d, #b07d10);
-    box-shadow: 0 0 4px rgba(201,162,39,0.7);
-    transition: background 0.4s, box-shadow 0.4s;
-  }
   #wordmark {
     margin-bottom: 6px;
     border: 1.5px solid #888;
@@ -96,13 +86,18 @@
     background: #0e0e0e;
     overflow: hidden;
   }
+  #wm-led {
+    fill: #b07d10;
+    filter: drop-shadow(0 0 3px rgba(201,162,39,0.7));
+    transition: fill 0.4s, filter 0.4s;
+  }
   #wm-led.streaming {
-    background: radial-gradient(circle at 35% 35%, #86efac, #16a34a);
-    box-shadow: 0 0 5px rgba(34,197,94,0.85);
+    fill: #16a34a;
+    filter: drop-shadow(0 0 4px rgba(34,197,94,0.85));
   }
   #wm-led.error {
-    background: radial-gradient(circle at 35% 35%, #fca5a5, #c82020);
-    box-shadow: 0 0 5px rgba(200,32,32,0.85);
+    fill: #c82020;
+    filter: drop-shadow(0 0 4px rgba(200,32,32,0.85));
   }
 
   #search-row { display: flex; gap: 8px; margin-bottom: 10px; margin-top: 0; }
@@ -143,6 +138,7 @@
     margin-left: auto; background: none; border: none; cursor: pointer;
     padding: 2px 0; color: #666; font-size: 22px; line-height: 1;
     transition: color 0.15s; flex-shrink: 0;
+    width: 32px; text-align: center;
   }
   #settings-btn:hover { color: #333; }
   #settings-sheet {
@@ -544,7 +540,6 @@
 <body>
 
 <div id="header">
-  <div id="wm-top"><div id="wm-led"></div></div>
   <div id="wordmark">
     <svg viewBox="0 0 390 28" width="100%" height="28" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
       <line id="wm-needle" x1="18" y1="0" x2="18" y2="28" stroke="#c82020" stroke-width="1.2"/>
@@ -2022,6 +2017,7 @@ window.addEventListener('scroll', () => {
     <g>${stationDots}</g>
     <text id="wm-fm-label" x="${TUNER_W_FM - 4}" y="10" text-anchor="end" font-family="monospace" font-size="7" font-weight="bold" letter-spacing="0.5">FM</text>
     <text id="wm-am-label" x="${W - 12}" y="10" text-anchor="end" font-family="monospace" font-size="7" font-weight="bold" letter-spacing="0.5">AM</text>
+    <circle id="wm-led" cx="${W - 17}" cy="20" r="3.5"/>
     <line id="wm-needle" x1="18" y1="0" x2="18" y2="28" stroke="#c82020" stroke-width="1.2"/>
   `;
   document.querySelector('#wordmark svg').innerHTML = svg;
