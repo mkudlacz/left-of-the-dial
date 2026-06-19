@@ -79,19 +79,22 @@
     pointer-events: none;
   }
 
-  #wordmark {
-    margin-bottom: 6px; position: relative;
-    border: 1.5px solid #888;
-    border-radius: 3px;
-    background: #0e0e0e;
-    overflow: hidden;
+  #wm-top {
+    display: flex; justify-content: flex-end;
+    padding-right: 2px; margin-bottom: 4px;
   }
   #wm-led {
-    position: absolute; top: 9px; right: 10px; z-index: 1;
     width: 7px; height: 7px; border-radius: 50%;
     background: radial-gradient(circle at 35% 35%, #fcd34d, #b07d10);
     box-shadow: 0 0 4px rgba(201,162,39,0.7);
     transition: background 0.4s, box-shadow 0.4s;
+  }
+  #wordmark {
+    margin-bottom: 6px;
+    border: 1.5px solid #888;
+    border-radius: 3px;
+    background: #0e0e0e;
+    overflow: hidden;
   }
   #wm-led.streaming {
     background: radial-gradient(circle at 35% 35%, #86efac, #16a34a);
@@ -112,17 +115,10 @@
   }
   #search-input:focus { border-color: #8a6410; }
   #search-input::placeholder { color: #999; }
-  #band-indicators { display: flex; justify-content: flex-end; margin-bottom: 5px; }
-  #band-box {
-    display: flex; align-items: center; gap: 3px;
-    background: #f0eeea; border: 1.5px solid rgba(70,120,200,0.75);
-    border-radius: 3px; padding: 2px 6px;
-    font-family: monospace; font-size: 9px; font-weight: 600;
-    letter-spacing: 1px; text-transform: uppercase;
+  #wm-fm-label, #wm-am-label {
+    fill: rgba(70,120,200,0.2); transition: fill 0.4s;
   }
-  #band-box .sep { color: rgba(80,80,80,0.4); }
-  #led-fm, #led-am { color: rgba(80,80,80,0.35); transition: color 0.4s; }
-  #led-fm.active, #led-am.active { color: #5b8ec8; }
+  #wm-fm-label.active, #wm-am-label.active { fill: #5b8ec8; }
   #tabs { display: flex; gap: 5px; margin-bottom: 8px; }
   .tab-btn {
     background: transparent; border: 1px solid transparent;
@@ -540,11 +536,8 @@
       <!-- Needle — position updated by JS on tune -->
       <line id="wm-needle" x1="18" y1="0" x2="18" y2="28" stroke="#c82020" stroke-width="1.2"/>
     </svg>
-    <div id="wm-led"></div>
   </div>
-  <div id="band-indicators">
-    <div id="band-box"><span id="led-fm">FM</span><span class="sep"> / </span><span id="led-am">AM</span></div>
-  </div>
+  <div id="wm-top"><div id="wm-led"></div></div>
   <div id="tabs">
     <button class="tab-btn active" data-tab="presets" onclick="switchTab('presets')">Presets</button>
     <button class="tab-btn" data-tab="browse" onclick="switchTab('browse')">Browse</button>
@@ -1638,8 +1631,8 @@ function updateNowPlaying() {
   document.getElementById('wm-led').classList.toggle('streaming', state.playing);
   const _curSt = state.currentId ? DB.find(s => s.id === state.currentId) : null;
   const _isAM  = state.playing && _curSt && parseFloat(_curSt.freq) > 200;
-  document.getElementById('led-fm')?.classList.toggle('active', state.playing && !_isAM);
-  document.getElementById('led-am')?.classList.toggle('active', !!_isAM);
+  document.getElementById('wm-fm-label')?.classList.toggle('active', state.playing && !_isAM);
+  document.getElementById('wm-am-label')?.classList.toggle('active', !!_isAM);
   const needle = document.getElementById('wm-needle');
   if (needle) {
     let nx = 18; // default: left of dial
@@ -1921,6 +1914,8 @@ window.addEventListener('scroll', () => {
     <g font-family="monospace" font-size="6" fill="rgba(200,195,185,0.8)">${labels}</g>
     <circle cx="${TUNER_AM_S - 1}" cy="12" r="1.5" fill="rgba(255,255,255,0.45)"/>
     <g>${stationDots}</g>
+    <text id="wm-fm-label" x="${TUNER_W_FM - 4}" y="10" text-anchor="end" font-family="monospace" font-size="7" font-weight="bold" letter-spacing="0.5">FM</text>
+    <text id="wm-am-label" x="${TUNER_AM_E - 4}" y="10" text-anchor="end" font-family="monospace" font-size="7" font-weight="bold" letter-spacing="0.5">AM</text>
     <line id="wm-needle" x1="18" y1="0" x2="18" y2="28" stroke="#c82020" stroke-width="1.2"/>
   `;
   document.querySelector('#wordmark svg').innerHTML = svg;
