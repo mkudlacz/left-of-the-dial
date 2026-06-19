@@ -129,6 +129,60 @@
   .tab-btn.active {
     background: rgba(138,100,16,0.12); border-color: rgba(138,100,16,0.35); color: #7a5c0c;
   }
+  #discover-btn {
+    margin-left: auto; background: none; border: none; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    padding: 2px 4px; opacity: 0.75; transition: opacity 0.15s; flex-shrink: 0;
+  }
+  #discover-btn:hover { opacity: 1; }
+  #discover-btn span {
+    font-family: monospace; font-size: 9px; letter-spacing: 1px;
+    text-transform: uppercase; color: #555;
+  }
+  #settings-btn {
+    background: none; border: none; cursor: pointer; padding: 2px 0 2px 6px;
+    color: #666; font-size: 15px; line-height: 1; transition: color 0.15s; flex-shrink: 0;
+    align-self: center;
+  }
+  #settings-btn:hover { color: #333; }
+  #settings-sheet {
+    position: fixed; inset: 0; z-index: 150; background: var(--bg);
+    display: none; flex-direction: column;
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  #settings-sheet.visible { display: flex; }
+  .sheet-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 16px 12px; border-bottom: 1px solid var(--border);
+  }
+  .sheet-title { font-family: monospace; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-dim); }
+  .sheet-done { background: none; border: none; cursor: pointer; color: var(--amber); font-size: 14px; padding: 0; }
+  .sheet-body { flex: 1; overflow-y: auto; padding: 20px 16px; display: flex; flex-direction: column; gap: 24px; }
+  .sheet-section-label { font-family: monospace; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px; }
+  .sheet-action {
+    display: block; width: 100%; text-align: left;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; cursor: pointer;
+    font-size: 13px; color: var(--text); margin-bottom: 6px; transition: border-color 0.15s;
+  }
+  .sheet-action:hover { border-color: var(--amber-border); }
+  .sheet-hint { font-size: 12px; color: var(--text-dim); margin: 0 0 10px; line-height: 1.5; }
+  .sheet-input {
+    width: 100%; box-sizing: border-box;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 12px; color: var(--text); font-size: 14px;
+    font-family: inherit; outline: none; margin-bottom: 6px;
+  }
+  .sheet-input:focus { border-color: var(--amber-border); }
+  .history-item {
+    display: flex; align-items: baseline; gap: 8px;
+    padding: 8px 0; border-bottom: 1px solid var(--border); cursor: pointer;
+  }
+  .history-item:last-child { border-bottom: none; }
+  .history-item:hover .history-call { color: var(--amber); }
+  .history-call { font-family: monospace; font-size: 13px; color: var(--text); font-weight: 600; flex-shrink: 0; }
+  .history-name { font-size: 12px; color: var(--text-dim); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .history-date { font-size: 11px; color: var(--text-faint); flex-shrink: 0; }
   #filter-row {
     display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px;
   }
@@ -490,61 +544,38 @@
 <body>
 
 <div id="header">
+  <div id="wm-top"><div id="wm-led"></div></div>
   <div id="wordmark">
     <svg viewBox="0 0 390 28" width="100%" height="28" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- Dark tuner band -->
-      <rect x="0" y="4" width="390" height="16" fill="#0e0e0e"/>
-      <rect x="0" y="4" width="390" height="1" fill="rgba(255,255,255,0.13)"/>
-      <rect x="0" y="19" width="390" height="1" fill="rgba(0,0,0,0.55)"/>
-      <!-- Major ticks every 2 MHz (88–108, 19.5px/MHz) -->
-      <g stroke="rgba(255,255,255,0.6)" stroke-width="1">
-        <line x1="39"  y1="4" x2="39"  y2="20"/> <!-- 90  -->
-        <line x1="78"  y1="4" x2="78"  y2="20"/> <!-- 92  -->
-        <line x1="117" y1="4" x2="117" y2="20"/> <!-- 94  -->
-        <line x1="156" y1="4" x2="156" y2="20"/> <!-- 96  -->
-        <line x1="195" y1="4" x2="195" y2="20"/> <!-- 98  -->
-        <line x1="234" y1="4" x2="234" y2="20"/> <!-- 100 -->
-        <line x1="273" y1="4" x2="273" y2="20"/> <!-- 102 -->
-        <line x1="312" y1="4" x2="312" y2="20"/> <!-- 104 -->
-        <line x1="351" y1="4" x2="351" y2="20"/> <!-- 106 -->
-      </g>
-      <!-- Minor ticks every 1 MHz -->
-      <g stroke="rgba(255,255,255,0.3)" stroke-width="0.7">
-        <line x1="20"  y1="4" x2="20"  y2="12"/> <!-- 89  -->
-        <line x1="59"  y1="4" x2="59"  y2="12"/> <!-- 91  -->
-        <line x1="98"  y1="4" x2="98"  y2="12"/> <!-- 93  -->
-        <line x1="137" y1="4" x2="137" y2="12"/> <!-- 95  -->
-        <line x1="176" y1="4" x2="176" y2="12"/> <!-- 97  -->
-        <line x1="215" y1="4" x2="215" y2="12"/> <!-- 99  -->
-        <line x1="254" y1="4" x2="254" y2="12"/> <!-- 101 -->
-        <line x1="293" y1="4" x2="293" y2="12"/> <!-- 103 -->
-        <line x1="332" y1="4" x2="332" y2="12"/> <!-- 105 -->
-        <line x1="371" y1="4" x2="371" y2="12"/> <!-- 107 -->
-      </g>
-      <!-- FM labels below band, every 2 MHz -->
-      <g font-family="monospace" font-size="6" fill="rgba(200,195,185,0.8)" text-anchor="middle">
-        <text x="39"  y="27">90</text>
-        <text x="78"  y="27">92</text>
-        <text x="117" y="27">94</text>
-        <text x="156" y="27">96</text>
-        <text x="195" y="27">98</text>
-        <text x="234" y="27">100</text>
-        <text x="273" y="27">102</text>
-        <text x="312" y="27">104</text>
-        <text x="351" y="27">106</text>
-      </g>
-      <!-- Needle — position updated by JS on tune -->
       <line id="wm-needle" x1="18" y1="0" x2="18" y2="28" stroke="#c82020" stroke-width="1.2"/>
     </svg>
   </div>
-  <div id="wm-top"><div id="wm-led"></div></div>
   <div id="tabs">
     <button class="tab-btn active" data-tab="presets" onclick="switchTab('presets')">Presets</button>
     <button class="tab-btn" data-tab="browse" onclick="switchTab('browse')">Browse</button>
     <button class="tab-btn" data-tab="favs" onclick="switchTab('favs')"><span style="font-size:15px;vertical-align:0">★</span><span style="font-size:10px;margin-left:2px;vertical-align:baseline">(<span id="fav-count">0</span>)</span></button>
-    <button id="share-btn" onclick="shareFavs()" title="Copy shareable link to starred stations">Save</button>
+    <button id="discover-btn" onclick="discover()" title="Tune to a random station">
+      <svg viewBox="0 0 22 22" width="16" height="16" fill="none">
+        <circle cx="11" cy="11" r="10" fill="#c4c0b8" stroke="#888" stroke-width="0.8"/>
+        <circle cx="11" cy="11" r="7.5" fill="#d4d0c8"/>
+        <g stroke="#555" stroke-width="0.9" stroke-linecap="round">
+          <line x1="11" y1="2.2" x2="11" y2="4.2"/>
+          <line x1="11" y1="2.2" x2="11" y2="4.2" transform="rotate(45,11,11)"/>
+          <line x1="11" y1="2.2" x2="11" y2="4.2" transform="rotate(90,11,11)"/>
+          <line x1="11" y1="2.2" x2="11" y2="4.2" transform="rotate(135,11,11)"/>
+          <line x1="11" y1="2.2" x2="11" y2="4.2" transform="rotate(180,11,11)"/>
+          <line x1="11" y1="2.2" x2="11" y2="4.2" transform="rotate(225,11,11)"/>
+          <line x1="11" y1="2.2" x2="11" y2="4.2" transform="rotate(270,11,11)"/>
+          <line x1="11" y1="2.2" x2="11" y2="4.2" transform="rotate(315,11,11)"/>
+        </g>
+        <circle cx="11" cy="4" r="1.4" fill="#444"/>
+        <circle cx="11" cy="11" r="2" fill="#999" stroke="#777" stroke-width="0.5"/>
+      </svg>
+      <span>Tune</span>
+    </button>
+    <button id="settings-btn" onclick="showSettings()" title="Settings">⚙</button>
   </div>
-  <div id="filter-row" id="filter-row"></div>
+  <div id="filter-row"></div>
 </div>
 
 <div id="content">
@@ -850,6 +881,7 @@ let state = {
   listenerCount: null,
   userGeo: null,       // {lat, lon} from Geolocation API
   distCache: {},       // station.id → miles from userGeo
+  discoverMode: false,
 };
 
 try { state.favs = JSON.parse(localStorage.getItem('lotd-favs') || localStorage.getItem('freeform-favs') || '[]'); } catch(e) {}
@@ -1092,7 +1124,6 @@ function render() {
 
   // import row + save-starred btn only in favs tab
   document.getElementById('import-row').style.display = state.tab === 'favs' ? 'flex' : 'none';
-  document.getElementById('share-btn').style.display = state.tab === 'favs' ? '' : 'none';
   const isBrowse = state.tab === 'browse';
   document.getElementById('search-row').style.display = isBrowse ? 'flex' : 'none';
   document.getElementById('browse-proviso').style.display = isBrowse ? 'block' : 'none';
@@ -1146,6 +1177,7 @@ function render() {
     const isFav = state.favs.includes(s.id);
     const card = document.createElement('div');
     card.className = 'station-card' + (isActive ? ' active' : '');
+    card.dataset.sid = s.id;
     card.innerHTML = `
       <div class="card-top">
         <div class="card-map" data-id="${s.id}" data-city="${s.city}" data-state="${s.state}"></div>
@@ -1566,17 +1598,20 @@ function tune(station) {
     .then(() => {
       state.playing = true;
       state.tuning = false;
+      state.discoverMode = false;
       stopTuningBar();
       showStatus('');
       requestWakeLock();
       setMediaSession(station, null);
       startMeta();
       enrichStation(station);
+      trackHistory(station.id);
       render();
     })
     .catch((err) => {
       state.tuning = false;
       stopTuningBar();
+      if (state.discoverMode) { setTimeout(discover, 600); return; }
       document.getElementById('wm-led').classList.add('error');
       showStatus(`Couldn't connect to ${station.name}. The stream may be offline or require a different app. Try visiting ${station.site} directly.`, 'error');
       render();
@@ -1607,6 +1642,7 @@ audio.addEventListener('error', () => {
   stopTuningBar();
   stopMeta(); clearMediaSession();
   hideExpandedPanel();
+  if (state.discoverMode) { setTimeout(discover, 600); return; }
   document.getElementById('wm-led').classList.add('error');
   if (s) showStatus(`Stream error for ${s.name}. It may be offline — try visiting ${s.site} to confirm.`, 'error');
   render();
@@ -1764,10 +1800,7 @@ function shareFavs() {
   if (state.favs.length === 0) { showStatus('No starred stations to share.', 'info'); return; }
   const url = location.href.split('#')[0] + '#favs=' + state.favs.join(',');
   navigator.clipboard.writeText(url).then(() => {
-    const btn = document.getElementById('share-btn');
-    btn.innerHTML = '✓ Copied';
-    btn.classList.add('copied');
-    setTimeout(() => { btn.innerHTML = '<svg viewBox=\"0 0 24 24\" width=\"13\" height=\"13\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3\"/><polyline points=\"16,6 12,2 8,6\"/><line x1=\"12\" y1=\"2\" x2=\"12\" y2=\"15\"/></svg> Share'; btn.classList.remove('copied'); }, 2000);
+    showStatus('Saved link copied to clipboard.', 'info');
   }).catch(() => {
     prompt('Copy this link to share your starred stations:', url);
   });
@@ -1828,6 +1861,89 @@ function showStatus(msg, type) {
   el.textContent = msg;
   el.className = type || '';
   el.style.display = msg ? 'block' : 'none';
+}
+
+// ─────────────────────────────────────────────────────────────
+// Discover
+// ─────────────────────────────────────────────────────────────
+let discoverExcluded = [];
+function discover() {
+  let pool = DB.filter(s => !discoverExcluded.includes(s.id));
+  if (!pool.length) { discoverExcluded = []; pool = [...DB]; }
+  const station = pool[Math.floor(Math.random() * pool.length)];
+  discoverExcluded.push(station.id);
+  state.discoverMode = true;
+  state.tab = 'browse';
+  state.filterIdx = 0;
+  state.searchQuery = '';
+  state.searchMode = false;
+  render();
+  tune(station);
+  setTimeout(() => {
+    const card = document.querySelector(`.station-card[data-sid="${station.id}"]`);
+    card?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 150);
+}
+
+// ─────────────────────────────────────────────────────────────
+// Listening history
+// ─────────────────────────────────────────────────────────────
+function trackHistory(id) {
+  try {
+    const h = JSON.parse(localStorage.getItem('lotd-history') || '[]');
+    if (h[0]?.id === id) return;
+    h.unshift({ id, ts: Date.now() });
+    localStorage.setItem('lotd-history', JSON.stringify(h.slice(0, 50)));
+  } catch(e) {}
+}
+function clearHistory() {
+  localStorage.removeItem('lotd-history');
+  renderHistory();
+}
+function renderHistory() {
+  const el = document.getElementById('history-list');
+  if (!el) return;
+  try {
+    const h = JSON.parse(localStorage.getItem('lotd-history') || '[]');
+    if (!h.length) { el.innerHTML = '<p class="sheet-hint">No stations listened to yet.</p>'; return; }
+    el.innerHTML = h.slice(0, 30).map(({id, ts}) => {
+      const s = DB.find(x => x.id === id);
+      if (!s) return '';
+      const date = new Date(ts).toLocaleDateString([], { month: 'short', day: 'numeric' });
+      return `<div class="history-item" onclick="tune(DB.find(s=>s.id==='${id}')); hideSettings();">
+        <span class="history-call">${id.toUpperCase()}</span>
+        <span class="history-name">${s.name}</span>
+        <span class="history-date">${date}</span>
+      </div>`;
+    }).join('');
+  } catch(e) { el.innerHTML = ''; }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Settings sheet
+// ─────────────────────────────────────────────────────────────
+function showSettings() {
+  renderHistory();
+  document.getElementById('settings-sheet').classList.add('visible');
+}
+function hideSettings() {
+  document.getElementById('settings-sheet').classList.remove('visible');
+}
+function importFavsFromSettings() {
+  const input = document.getElementById('settings-import');
+  const raw = input.value.trim();
+  if (!raw) return;
+  const m = raw.match(/#favs=([^&\s]+)/);
+  const idsStr = m ? m[1] : raw;
+  const valid = idsStr.split(',').map(s => s.trim().toLowerCase()).filter(id => DB.some(s => s.id === id));
+  if (!valid.length) { showStatus('No matching stations found in that URL.', 'error'); return; }
+  let added = 0;
+  valid.forEach(id => { if (!state.favs.includes(id)) { state.favs.push(id); added++; } });
+  try { localStorage.setItem('lotd-favs', JSON.stringify(state.favs)); } catch(e) {}
+  input.value = '';
+  const skipped = valid.length - added;
+  showStatus(`Added ${added} station${added !== 1 ? 's' : ''}${skipped ? ` · ${skipped} already starred` : ''}.`, 'info');
+  render();
 }
 
 // Add to Home Screen banner (iOS Safari only, not already installed, not dismissed)
@@ -1942,6 +2058,27 @@ render();
   <div id="a2hs-card">
     <p>On iOS, tap <svg class="share-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/><polyline points="16,6 12,2 8,6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> <strong>Share</strong> and <svg class="share-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> <strong>Add to Home Screen</strong> to turn this page into a dedicated app.</p>
     <button onclick="dismissA2HS()">Got it</button>
+  </div>
+</div>
+
+<div id="settings-sheet">
+  <div class="sheet-header">
+    <span class="sheet-title">Settings</span>
+    <button class="sheet-done" onclick="hideSettings()">Done</button>
+  </div>
+  <div class="sheet-body">
+    <div>
+      <div class="sheet-section-label">Starred Stations</div>
+      <button class="sheet-action" onclick="shareFavs()">Save as URL</button>
+      <p class="sheet-hint">Copy a shareable link to all your starred stations.</p>
+      <input id="settings-import" class="sheet-input" type="url" placeholder="Paste a Save URL to restore Starred…" autocomplete="off" autocorrect="off" spellcheck="false">
+      <button class="sheet-action" onclick="importFavsFromSettings()">Restore Starred</button>
+    </div>
+    <div>
+      <div class="sheet-section-label">Listening History</div>
+      <div id="history-list"></div>
+      <button class="sheet-action" id="clear-history-btn" onclick="clearHistory()" style="margin-top:8px">Clear History</button>
+    </div>
   </div>
 </div>
 
