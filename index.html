@@ -112,6 +112,27 @@
   }
   #search-input:focus { border-color: #8a6410; }
   #search-input::placeholder { color: #999; }
+  #band-indicators {
+    display: flex; justify-content: flex-end; gap: 10px;
+    margin-bottom: 5px;
+  }
+  .band-ind {
+    display: flex; align-items: center; gap: 4px;
+    font-family: monospace; font-size: 11px; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase;
+    color: rgba(80,80,80,0.5);
+    transition: color 0.4s;
+  }
+  .band-ind::before {
+    content: ''; display: block; width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(60,100,180,0.15);
+    transition: background 0.4s, box-shadow 0.4s;
+  }
+  .band-ind.active { color: #5b8ec8; }
+  .band-ind.active::before {
+    background: radial-gradient(circle at 35% 35%, #93c5fd, #3a70c0);
+    box-shadow: 0 0 5px rgba(80,150,240,0.75);
+  }
   #tabs { display: flex; gap: 5px; margin-bottom: 8px; }
   .tab-btn {
     background: transparent; border: 1px solid transparent;
@@ -530,6 +551,10 @@
       <line id="wm-needle" x1="18" y1="0" x2="18" y2="28" stroke="#c82020" stroke-width="1.2"/>
     </svg>
     <div id="wm-led"></div>
+  </div>
+  <div id="band-indicators">
+    <span class="band-ind" id="led-fm">FM</span>
+    <span class="band-ind" id="led-am">AM</span>
   </div>
   <div id="tabs">
     <button class="tab-btn active" data-tab="presets" onclick="switchTab('presets')">Presets</button>
@@ -1622,6 +1647,10 @@ function stopTuningBar() {
 // ─────────────────────────────────────────────────────────────
 function updateNowPlaying() {
   document.getElementById('wm-led').classList.toggle('streaming', state.playing);
+  const _curSt = state.currentId ? DB.find(s => s.id === state.currentId) : null;
+  const _isAM  = state.playing && _curSt && parseFloat(_curSt.freq) > 200;
+  document.getElementById('led-fm')?.classList.toggle('active', state.playing && !_isAM);
+  document.getElementById('led-am')?.classList.toggle('active', !!_isAM);
   const needle = document.getElementById('wm-needle');
   if (needle) {
     let nx = 18; // default: left of dial
