@@ -1115,7 +1115,7 @@ function render() {
 
   // import row + settings gear only in favs tab
   document.getElementById('import-row').style.display = state.tab === 'favs' ? 'flex' : 'none';
-  document.getElementById('settings-btn').style.display = state.tab === 'favs' ? '' : 'none';
+  document.getElementById('settings-btn').style.display = state.tab === 'favs' ? 'block' : 'none';
   const isBrowse = state.tab === 'browse';
   document.getElementById('search-row').style.display = isBrowse ? 'flex' : 'none';
   document.getElementById('browse-proviso').style.display = isBrowse ? 'block' : 'none';
