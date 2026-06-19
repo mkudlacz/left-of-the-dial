@@ -137,9 +137,9 @@
   }
   #settings-btn {
     margin-left: auto; background: none; border: none; cursor: pointer;
-    padding: 2px 0; color: #666; font-size: 22px; line-height: 1;
+    padding: 3px 0; color: #666; line-height: 0;
     transition: color 0.15s; flex-shrink: 0;
-    width: 32px; text-align: center;
+    width: 32px; display: flex; align-items: center; justify-content: center;
   }
   #settings-btn:hover { color: #333; }
   #settings-sheet {
@@ -167,7 +167,7 @@
   .sheet-input {
     width: 100%; box-sizing: border-box;
     background: var(--bg2); border: 1px solid var(--border);
-    border-radius: 6px; padding: 10px 12px; color: var(--text); font-size: 14px;
+    border-radius: 6px; padding: 10px 12px; color: var(--text); font-size: 16px;
     font-family: inherit; outline: none; margin-bottom: 6px;
   }
   .sheet-input:focus { border-color: var(--amber-border); }
@@ -179,9 +179,9 @@
   .history-card-body { flex: 1; min-width: 0; cursor: pointer; }
   .history-card-body:hover .card-callsign { opacity: 0.8; }
   .history-dur { font-size: 11px; color: var(--text-faint); margin-top: 2px; }
-  #settings-status {
+  .sheet-section-status {
     display: none; font-size: 12px; color: var(--amber);
-    padding: 6px 0 2px; line-height: 1.4;
+    padding: 4px 0 2px; line-height: 1.4;
   }
   #filter-row {
     display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px;
@@ -940,7 +940,7 @@ function buildFilters() {
     const gear = document.createElement('button');
     gear.id = 'settings-btn';
     gear.title = 'Settings';
-    gear.textContent = '⚙';
+    gear.innerHTML = `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`;
     gear.onclick = showSettings;
     row.appendChild(gear);
   }
@@ -1805,10 +1805,10 @@ function shareStation() {
 }
 
 function shareFavs() {
-  if (state.favs.length === 0) { showSettingsStatus('No starred stations to share.'); return; }
+  if (state.favs.length === 0) { showSettingsStatus('No starred stations to share.', 'settings-copy-status'); return; }
   const url = location.href.split('#')[0] + '#favs=' + state.favs.join(',');
   navigator.clipboard.writeText(url).then(() => {
-    showSettingsStatus('Link copied to clipboard.');
+    showSettingsStatus('Link copied to clipboard.', 'settings-copy-status');
   }).catch(() => {
     prompt('Copy this link to share your starred stations:', url);
   });
@@ -1947,8 +1947,8 @@ function renderHistory() {
 // ─────────────────────────────────────────────────────────────
 // Settings sheet
 // ─────────────────────────────────────────────────────────────
-function showSettingsStatus(msg) {
-  const el = document.getElementById('settings-status');
+function showSettingsStatus(msg, targetId) {
+  const el = document.getElementById(targetId);
   if (!el) return;
   el.textContent = msg;
   el.style.display = 'block';
@@ -1969,13 +1969,13 @@ function importFavsFromSettings() {
   const m = raw.match(/#favs=([^&\s]+)/);
   const idsStr = m ? m[1] : raw;
   const valid = idsStr.split(',').map(s => s.trim().toLowerCase()).filter(id => DB.some(s => s.id === id));
-  if (!valid.length) { showSettingsStatus('No matching stations found.'); return; }
+  if (!valid.length) { showSettingsStatus('No matching stations found.', 'settings-restore-status'); return; }
   let added = 0;
   valid.forEach(id => { if (!state.favs.includes(id)) { state.favs.push(id); added++; } });
   try { localStorage.setItem('lotd-favs', JSON.stringify(state.favs)); } catch(e) {}
   input.value = '';
   const skipped = valid.length - added;
-  showSettingsStatus(`Added ${added} station${added !== 1 ? 's' : ''}${skipped ? ` · ${skipped} already starred` : ''}.`);
+  showSettingsStatus(`Added ${added} station${added !== 1 ? 's' : ''}${skipped ? ` · ${skipped} already starred` : ''}.`, 'settings-restore-status');
   render();
 }
 
@@ -2104,10 +2104,11 @@ render();
     <div>
       <div class="sheet-section-label">Starred Stations</div>
       <button class="sheet-action" onclick="shareFavs()">Save as URL</button>
+      <div id="settings-copy-status" class="sheet-section-status"></div>
       <p class="sheet-hint">Copy a shareable link to all your starred stations.</p>
       <input id="settings-import" class="sheet-input" type="url" placeholder="Paste a Save URL to restore Starred…" autocomplete="off" autocorrect="off" spellcheck="false">
       <button class="sheet-action" onclick="importFavsFromSettings()">Restore Starred</button>
-      <div id="settings-status"></div>
+      <div id="settings-restore-status" class="sheet-section-status"></div>
     </div>
     <div>
       <div class="sheet-section-label">Listening History</div>
