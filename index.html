@@ -27,6 +27,7 @@
     --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+  html { scrollbar-gutter: stable; }
   html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, 'Inter', sans-serif; overscroll-behavior: none; }
 
   /* ── Header ── */
@@ -170,15 +171,18 @@
     font-family: inherit; outline: none; margin-bottom: 6px;
   }
   .sheet-input:focus { border-color: var(--amber-border); }
-  .history-item {
-    display: flex; align-items: baseline; gap: 8px;
-    padding: 8px 0; border-bottom: 1px solid var(--border); cursor: pointer;
+  .history-card {
+    display: flex; align-items: center;
+    padding: 10px 0; border-bottom: 1px solid var(--border); gap: 4px;
   }
-  .history-item:last-child { border-bottom: none; }
-  .history-item:hover .history-call { color: var(--amber); }
-  .history-call { font-family: monospace; font-size: 13px; color: var(--text); font-weight: 600; flex-shrink: 0; }
-  .history-name { font-size: 12px; color: var(--text-dim); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .history-date { font-size: 11px; color: var(--text-faint); flex-shrink: 0; }
+  .history-card:last-child { border-bottom: none; }
+  .history-card-body { flex: 1; min-width: 0; cursor: pointer; }
+  .history-card-body:hover .card-callsign { opacity: 0.8; }
+  .history-dur { font-size: 11px; color: var(--text-faint); margin-top: 2px; }
+  #settings-status {
+    display: none; font-size: 12px; color: var(--amber);
+    padding: 6px 0 2px; line-height: 1.4;
+  }
   #filter-row {
     display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px;
   }
@@ -1176,7 +1180,6 @@ function render() {
             <span class="card-callsign">${s.id.toUpperCase()}</span>
           </div>
           <div class="card-freq">${s.freq}</div>
-          <div class="card-name">${s.name}</div>
           <div class="card-meta">${s.org} · ${s.city}, ${s.state}${FILTERS[state.filterIdx]?.nearMe && state.distCache[s.id] != null ? ' · ' + Math.round(state.distCache[s.id]) + ' mi' : ''}</div>
           <div class="card-genre">${s.genre}</div>
         </div>
@@ -1518,6 +1521,20 @@ async function icecastMeta(streamUrl) {
 }
 
 let metaTimer = null;
+let listenStart = null;
+
+function fmtDuration(ms) {
+  if (!ms || ms < 60000) return '';
+  const m = Math.round(ms / 60000);
+  return m < 60 ? m + 'm' : Math.floor(m / 60) + 'h ' + (m % 60) + 'm';
+}
+function updateHistoryDuration(id, ms) {
+  try {
+    const h = JSON.parse(localStorage.getItem('lotd-history') || '[]');
+    const entry = h.find(e => e.id === id);
+    if (entry) { entry.dur = (entry.dur || 0) + ms; localStorage.setItem('lotd-history', JSON.stringify(h)); }
+  } catch(e) {}
+}
 let wakeLock = null;
 async function requestWakeLock() {
   if (!('wakeLock' in navigator)) return;
@@ -1556,6 +1573,10 @@ function stopMeta() {
   clearInterval(metaTimer);
   clearEnrichment();
   releaseWakeLock();
+  if (listenStart !== null && state.currentId) {
+    updateHistoryDuration(state.currentId, Date.now() - listenStart);
+    listenStart = null;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1592,6 +1613,7 @@ function tune(station) {
       setMediaSession(station, null);
       startMeta();
       enrichStation(station);
+      listenStart = Date.now();
       trackHistory(station.id);
       render();
     })
@@ -1783,10 +1805,10 @@ function shareStation() {
 }
 
 function shareFavs() {
-  if (state.favs.length === 0) { showStatus('No starred stations to share.', 'info'); return; }
+  if (state.favs.length === 0) { showSettingsStatus('No starred stations to share.'); return; }
   const url = location.href.split('#')[0] + '#favs=' + state.favs.join(',');
   navigator.clipboard.writeText(url).then(() => {
-    showStatus('Saved link copied to clipboard.', 'info');
+    showSettingsStatus('Link copied to clipboard.');
   }).catch(() => {
     prompt('Copy this link to share your starred stations:', url);
   });
@@ -1891,22 +1913,48 @@ function renderHistory() {
   try {
     const h = JSON.parse(localStorage.getItem('lotd-history') || '[]');
     if (!h.length) { el.innerHTML = '<p class="sheet-hint">No stations listened to yet.</p>'; return; }
-    el.innerHTML = h.slice(0, 30).map(({id, ts}) => {
+    el.innerHTML = '';
+    h.slice(0, 30).forEach(({id, ts, dur}) => {
       const s = DB.find(x => x.id === id);
-      if (!s) return '';
+      if (!s) return;
+      const isFav = state.favs.includes(id);
       const date = new Date(ts).toLocaleDateString([], { month: 'short', day: 'numeric' });
-      return `<div class="history-item" onclick="tune(DB.find(s=>s.id==='${id}')); hideSettings();">
-        <span class="history-call">${id.toUpperCase()}</span>
-        <span class="history-name">${s.name}</span>
-        <span class="history-date">${date}</span>
-      </div>`;
-    }).join('');
+      const durStr = fmtDuration(dur);
+      const card = document.createElement('div');
+      card.className = 'history-card';
+      card.innerHTML = `
+        <div class="history-card-body">
+          <span class="card-callsign">${id.toUpperCase()}</span>
+          <div class="card-freq">${s.freq}</div>
+          <div class="card-meta">${s.org} · ${s.city}, ${s.state}</div>
+          <div class="history-dur">${date}${durStr ? ' · ' + durStr : ''}</div>
+        </div>
+        <button class="fav-btn ${isFav ? 'saved' : ''}" data-id="${id}">${isFav ? '★' : '☆'}</button>
+      `;
+      card.querySelector('.history-card-body').addEventListener('click', () => {
+        tune(s); hideSettings();
+      });
+      card.querySelector('.fav-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleFav(id);
+        renderHistory();
+      });
+      el.appendChild(card);
+    });
   } catch(e) { el.innerHTML = ''; }
 }
 
 // ─────────────────────────────────────────────────────────────
 // Settings sheet
 // ─────────────────────────────────────────────────────────────
+function showSettingsStatus(msg) {
+  const el = document.getElementById('settings-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.style.display = 'none'; }, 3000);
+}
 function showSettings() {
   renderHistory();
   document.getElementById('settings-sheet').classList.add('visible');
@@ -1921,13 +1969,13 @@ function importFavsFromSettings() {
   const m = raw.match(/#favs=([^&\s]+)/);
   const idsStr = m ? m[1] : raw;
   const valid = idsStr.split(',').map(s => s.trim().toLowerCase()).filter(id => DB.some(s => s.id === id));
-  if (!valid.length) { showStatus('No matching stations found in that URL.', 'error'); return; }
+  if (!valid.length) { showSettingsStatus('No matching stations found.'); return; }
   let added = 0;
   valid.forEach(id => { if (!state.favs.includes(id)) { state.favs.push(id); added++; } });
   try { localStorage.setItem('lotd-favs', JSON.stringify(state.favs)); } catch(e) {}
   input.value = '';
   const skipped = valid.length - added;
-  showStatus(`Added ${added} station${added !== 1 ? 's' : ''}${skipped ? ` · ${skipped} already starred` : ''}.`, 'info');
+  showSettingsStatus(`Added ${added} station${added !== 1 ? 's' : ''}${skipped ? ` · ${skipped} already starred` : ''}.`);
   render();
 }
 
@@ -2059,6 +2107,7 @@ render();
       <p class="sheet-hint">Copy a shareable link to all your starred stations.</p>
       <input id="settings-import" class="sheet-input" type="url" placeholder="Paste a Save URL to restore Starred…" autocomplete="off" autocorrect="off" spellcheck="false">
       <button class="sheet-action" onclick="importFavsFromSettings()">Restore Starred</button>
+      <div id="settings-status"></div>
     </div>
     <div>
       <div class="sheet-section-label">Listening History</div>
