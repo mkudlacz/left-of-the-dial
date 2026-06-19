@@ -556,7 +556,7 @@
     <button class="tab-btn" data-tab="favs" onclick="switchTab('favs')"><span style="font-size:15px;vertical-align:0">★</span><span style="font-size:10px;margin-left:2px;vertical-align:baseline">(<span id="fav-count">0</span>)</span></button>
     <button id="discover-btn" onclick="discover()" title="Tune to a random station">
       <span>Tune</span>
-      <svg viewBox="0 0 24 24" width="20" height="20">
+      <svg viewBox="0 0 24 24" width="28" height="28">
         <defs>
           <radialGradient id="dial-grad" cx="38%" cy="35%" r="65%">
             <stop offset="0%" stop-color="#e8e6e0"/>
@@ -1859,9 +1859,8 @@ function showStatus(msg, type) {
 // ─────────────────────────────────────────────────────────────
 let discoverExcluded = [];
 function discover() {
-  const presetStations = PRESETS.map(id => DB.find(s => s.id === id)).filter(Boolean);
-  let pool = presetStations.filter(s => !discoverExcluded.includes(s.id));
-  if (!pool.length) { discoverExcluded = []; pool = presetStations; }
+  let pool = DB.filter(s => !discoverExcluded.includes(s.id));
+  if (!pool.length) { discoverExcluded = []; pool = [...DB]; }
   const station = pool[Math.floor(Math.random() * pool.length)];
   discoverExcluded.push(station.id);
   state.tab = 'browse';
