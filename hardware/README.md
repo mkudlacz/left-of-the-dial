@@ -31,20 +31,23 @@ iPhone (Left of the Dial app)
 
 | # | Component | Purpose | Est. Cost | Notes |
 |---|-----------|---------|-----------|-------|
-| 1 | Raspberry Pi Zero 2W | Headless compute + WiFi + Bluetooth 4.2 | $15 | Built-in BT — no DAC needed |
-| 2 | PiJuice Zero | LiPo battery + charging management HAT | $45 | Stacks on Pi Zero form factor; 3000mAh cell recommended |
-| 3 | LiPo battery 3000mAh | ~5–6 hrs runtime | ~$12 | Compatible with PiJuice Zero connector |
-| 4 | Nobsound AK2515 | VFD spectrum analyzer display | $50 | 25×15 VFD, USB-C powered, 3.5mm AUX in; fed from Pi onboard audio |
-| 5 | KY-040 Rotary Encoder module | Station nav + BT speaker select | ~$5 | Button built in; long press triggers BT menu |
-| 6 | Machined aluminum knob | Primary tactile control | ~$15–20 | Buy first — design hole around it |
-| 7 | MicroSD card (32GB+) | Pi OS + software | ~$8 | Samsung or SanDisk |
-| 8 | Short 3.5mm cable (internal) | Pi headphone out → AK2515 AUX in | ~$3 | Internal only; spectrum display feed |
-| 9 | Walnut (end-caps) | Enclosure sides | ~$20 | ~¾" thick American black walnut |
-| 10 | Aluminum face plate | Front face with cutouts | ~$40–60 | 6061 aluminum, 0.125"; CNC via SendCutSend |
-| 11 | Acrylic window | Protect AK2515 VFD | ~$5 | Clear or lightly smoked |
-| 12 | Misc (wire, standoffs, screws) | Internal assembly | ~$15 | M2.5 standoffs for Pi/PiJuice stack |
+| 1 | Raspberry Pi Zero 2W | Headless compute + WiFi + Bluetooth 4.2 | $15 | Built-in BT |
+| 2 | HiFiBerry DAC Zero | Clean analog audio (I²S DAC HAT) | $25 | Required for RCA out; stacks on Pi Zero; also feeds AK2515 |
+| 3 | PiJuice Zero | LiPo battery + charging management HAT | $45 | Stacks on Pi Zero form factor; 3000mAh cell recommended |
+| 4 | LiPo battery 3000mAh | ~5–6 hrs runtime | ~$12 | Compatible with PiJuice Zero connector |
+| 5 | Nobsound AK2515 | VFD spectrum analyzer display | $50 | 25×15 VFD, USB-C powered, 3.5mm AUX in |
+| 6 | KY-040 Rotary Encoder module | Station nav + BT speaker select | ~$5 | Button built in; long press triggers BT menu |
+| 7 | Machined aluminum knob | Primary tactile control | ~$15–20 | Buy first — design hole around it |
+| 8 | MicroSD card (32GB+) | Pi OS + software | ~$8 | Samsung or SanDisk |
+| 9 | 3.5mm Y-splitter (internal) | HiFiBerry out → AK2515 + RCA board | ~$3 | Splits clean DAC signal to both |
+| 10 | 3.5mm to RCA board/cable | Internal DAC → rear RCA jacks | ~$5 | Short internal cable to panel-mount RCA jacks |
+| 11 | Panel-mount RCA jacks (pair) | Rear audio output | ~$5 | Flush-mount in back panel |
+| 12 | Walnut (end-caps) | Enclosure sides | ~$20 | ~¾" thick American black walnut |
+| 13 | Aluminum face plate | Front face with cutouts | ~$40–60 | 6061 aluminum, 0.125"; CNC via SendCutSend |
+| 14 | Acrylic window | Protect AK2515 VFD | ~$5 | Clear or lightly smoked |
+| 15 | Misc (wire, standoffs, screws) | Internal assembly | ~$15 | M2.5 standoffs for Pi/HiFiBerry/PiJuice stack |
 
-**Estimated total:** ~$235–260  
+**Estimated total:** ~$270–300  
 **Bluetooth speaker** (separate purchase — see Speaker Options below)
 
 ---
@@ -59,7 +62,8 @@ iPhone (Left of the Dial app)
 - Rotary encoder knob (right side)
 
 **Back panel:**
-- USB-C charging in — the only port
+- USB-C charging in
+- RCA out (L/R) — for receiver / stereo system
 
 **Material hierarchy:**
 - Walnut end-caps (left and right, ~¾" thick)
@@ -96,16 +100,16 @@ Paired devices are managed once (via CLI or companion app) and then permanently 
 |-----------|-----------|-------|
 | OS | Raspberry Pi OS Lite (64-bit) | Headless, no desktop |
 | Audio playback | `mpv` | Streams radio URLs; output via PulseAudio |
-| Audio routing | `PulseAudio` | Routes to BT sink (speaker) + local sink (AK2515) simultaneously via combined sink |
+| Audio routing | `PulseAudio` | Combined sink: BT speaker + HiFiBerry (RCA out + AK2515 feed) simultaneously |
 | Bluetooth | `bluez` + `pulseaudio-module-bluetooth` | `bluetoothctl` for device management |
 | GPIO (encoder) | Python + `gpiozero` | Reads turns and button presses |
 | Device server | Python + `asyncio` + `websockets` | WebSocket API for phone app |
 | mDNS discovery | `avahi-daemon` | Phone app detects Pi on local network |
 | Battery management | PiJuice Python library | Read charge %, trigger safe shutdown |
 | AK2515 power | USB from Pi | Pi USB-A → AK2515 USB-C |
-| AK2515 audio | Pi 3.5mm headphone out | Onboard PWM audio is fine for display-only |
+| AK2515 audio | HiFiBerry DAC → 3.5mm Y-splitter | Clean signal; one branch to AK2515, one to RCA jacks |
 
-**PulseAudio combined sink** allows simultaneous output to BT speaker (audio) and Pi's onboard 3.5mm (AK2515 spectrum). The AK2515 just needs the signal — quality doesn't matter for visual display.
+**PulseAudio combined sink** routes audio to Bluetooth (wireless speaker) and HiFiBerry DAC (RCA out + AK2515 feed) simultaneously. Use Bluetooth when portable, RCA when connected to a receiver — both can be active at once.
 
 ---
 
