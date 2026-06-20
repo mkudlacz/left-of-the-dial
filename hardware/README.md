@@ -1,12 +1,12 @@
 # Left of the Dial — Hardware Project
 
-A dedicated streaming radio device to complement the web app at `tuner.redcontroldeck.com`. The phone is the UI. The box plays and glows.
+A dedicated streaming radio device to complement the web app at `tuner.redcontroldeck.com`. The phone is the UI. The box plays, glows, and pairs to any Bluetooth speaker.
 
 ---
 
 ## Concept
 
-A small, focused audio object — not a computer with a screen. The physical device streams radio via WiFi, outputs audio to speakers, and shows a VFD spectrum display while playing. All station selection, preset management, browsing, and settings happen in the Left of the Dial web app on your phone. The box has one knob and glows.
+A small, focused audio object. Streams radio via WiFi, outputs audio via Bluetooth to any paired speaker, and shows a VFD spectrum display while playing. All station selection, browsing, and settings happen in the Left of the Dial web app on your phone. The knob navigates presets and selects Bluetooth speakers. The box has a battery — no cables during use.
 
 ---
 
@@ -15,14 +15,15 @@ A small, focused audio object — not a computer with a screen. The physical dev
 ```
 iPhone (Left of the Dial app)
   └── WiFi → Pi WebSocket API → mpv audio stream
-                                    └── HiFiBerry DAC
-                                          ├── 3.5mm Y-splitter
-                                          │     ├── AK2515 (spectrum display)
-                                          │     └── Powered speakers / amp
-                                          └── Bluetooth → wireless speaker (optional)
+                                    └── PulseAudio
+                                          ├── Bluetooth → paired BT speaker (audio)
+                                          └── Pi onboard audio → AK2515 3.5mm in (spectrum display only)
 ```
 
-**Rotary encoder** on the box → Python reads GPIO → sends `navigateStation(+1/-1)` to the streaming layer → plays next/previous preset.
+**Knob interactions:**
+- Turn = next / previous preset
+- Long press = enter Bluetooth speaker select mode
+- In BT mode: turn scrolls paired devices on VFD, press connects, long press returns to play
 
 ---
 
@@ -30,62 +31,62 @@ iPhone (Left of the Dial app)
 
 | # | Component | Purpose | Est. Cost | Notes |
 |---|-----------|---------|-----------|-------|
-| 1 | Raspberry Pi Zero 2W | Headless compute + WiFi + Bluetooth | $15 | Tiny, fanless, sufficient for audio streaming |
-| 2 | HiFiBerry DAC Zero | Quality analog audio output (I²S DAC HAT) | $25 | Stacks directly on Pi Zero 2W |
-| 3 | Nobsound AK2515 | VFD spectrum analyzer display | $50 | 25×15 VFD, USB-C powered, 3.5mm AUX in, shows spectrum + clock |
-| 4 | KY-040 Rotary Encoder module | Physical station navigation knob | ~$5 | Reads via Pi GPIO, skip presets |
-| 5 | Machined aluminum knob | The tactile soul of the device | ~$15–20 | Elma or Davies Molding; knurled grip; buy before designing hole |
-| 6 | MicroSD card (32GB+) | Pi OS + software | ~$8 | Samsung or SanDisk |
-| 7 | USB-C power supply (5V 3A) | Powers Pi (and Pi powers AK2515 via USB) | ~$10 | Single cable in |
-| 8 | 3.5mm Y-splitter cable | Split Pi audio to AK2515 + speakers | ~$5 | Pi DAC → splitter → AK2515 input + speaker amp input |
-| 9 | Walnut (end-caps) | Enclosure sides | ~$20 | ~¾" thick American black walnut; two pieces |
-| 10 | Aluminum face plate | Front face with cutouts | ~$40–60 | 6061 aluminum, 0.125" thick; CNC via SendCutSend |
-| 11 | Acrylic window (optional) | Protect AK2515 VFD | ~$5 | Clear or lightly smoked; fits in face cutout |
-| 12 | Misc (wire, standoffs, screws, thermal paste) | Internal assembly | ~$15 | M2.5 standoffs for Pi/DAC stack |
+| 1 | Raspberry Pi Zero 2W | Headless compute + WiFi + Bluetooth 4.2 | $15 | Built-in BT — no DAC needed |
+| 2 | PiJuice Zero | LiPo battery + charging management HAT | $45 | Stacks on Pi Zero form factor; 3000mAh cell recommended |
+| 3 | LiPo battery 3000mAh | ~5–6 hrs runtime | ~$12 | Compatible with PiJuice Zero connector |
+| 4 | Nobsound AK2515 | VFD spectrum analyzer display | $50 | 25×15 VFD, USB-C powered, 3.5mm AUX in; fed from Pi onboard audio |
+| 5 | KY-040 Rotary Encoder module | Station nav + BT speaker select | ~$5 | Button built in; long press triggers BT menu |
+| 6 | Machined aluminum knob | Primary tactile control | ~$15–20 | Buy first — design hole around it |
+| 7 | MicroSD card (32GB+) | Pi OS + software | ~$8 | Samsung or SanDisk |
+| 8 | Short 3.5mm cable (internal) | Pi headphone out → AK2515 AUX in | ~$3 | Internal only; spectrum display feed |
+| 9 | Walnut (end-caps) | Enclosure sides | ~$20 | ~¾" thick American black walnut |
+| 10 | Aluminum face plate | Front face with cutouts | ~$40–60 | 6061 aluminum, 0.125"; CNC via SendCutSend |
+| 11 | Acrylic window | Protect AK2515 VFD | ~$5 | Clear or lightly smoked |
+| 12 | Misc (wire, standoffs, screws) | Internal assembly | ~$15 | M2.5 standoffs for Pi/PiJuice stack |
 
-**Estimated total (excl. speakers):** ~$215–235
+**Estimated total:** ~$235–260  
+**Bluetooth speaker** (separate purchase — see Speaker Options below)
 
 ---
 
 ## Enclosure Design
 
-**Target dimensions:** ~9"W × 3"H × 4"D  
-*(Driven by AK2515 board size — measure board first, design around it)*
+**Target dimensions:** driven by AK2515 board — measure board first, design around it.
 
-**Front face layout (left → right):**
-- AK2515 VFD window (dominant element, left-center)
-- Small LED indicator (top-right corner, mirrors app LED state)
+**Front face (left → right):**
+- AK2515 VFD window — the dominant element, glows green with spectrum
+- Small LED indicator (top-right corner) — mirrors app LED state (amber/green/red)
 - Rotary encoder knob (right side)
 
-**Material hierarchy:**
-- Walnut end-caps (left and right sides, ~¾" thick)
-- Brushed 6061 aluminum face plate (inset between walnut caps, like SA-101)
-- Face plate slightly recessed from walnut edges — the shadow line reads as intentional
-
 **Back panel:**
-- USB-C power in
-- 3.5mm or RCA audio out
-- Nothing else visible
+- USB-C charging in — the only port
 
-**Key design constraint:** Buy the aluminum knob first. Design the encoder hole to fit it precisely. The knob is the primary touch point and determines perceived quality.
+**Material hierarchy:**
+- Walnut end-caps (left and right, ~¾" thick)
+- Brushed 6061 aluminum face plate inset between walnut caps
+- Face plate slightly recessed from walnut edges (shadow line = intentional)
+
+**Key constraint:** Buy the aluminum knob first. Design the encoder hole around it.
 
 ---
 
-## Audio Output Options
+## Knob + VFD Interaction Design
 
-**Wired (primary):**
-- HiFiBerry DAC Zero → 3.5mm out → powered bookshelf speakers or stereo receiver
-- Quality analog signal, lowest latency
+```
+PLAY MODE (default)
+  VFD: spectrum animation
+  Turn knob → navigate presets (next / prev)
+  Short press → play / pause
+  Long press → enter BT SPEAKER MODE
 
-**Bluetooth (secondary):**
-- Pi Zero 2W has built-in Bluetooth
-- `pulseaudio` + `bluetoothctl` on Pi OS routes audio to any paired BT speaker
-- Good for portable/wireless setup
+BT SPEAKER MODE
+  VFD: scrolls paired device name (e.g., "MARSHALL WILLEN")
+  Turn knob → scroll through paired BT devices
+  Short press → connect selected device, return to PLAY MODE
+  Long press → cancel, return to PLAY MODE
+```
 
-**AirPlay:**
-- Pi can run `shairport-sync` to RECEIVE AirPlay from iPhone (Pi becomes the speaker)
-- Pi cannot easily be a certified AirPlay 2 SENDER
-- Alternative: `owntone` server for sending to AirPlay receivers
+Paired devices are managed once (via CLI or companion app) and then permanently available on the knob menu. Adding a new speaker = pair via CLI, it appears in the menu.
 
 ---
 
@@ -94,34 +95,51 @@ iPhone (Left of the Dial app)
 | Component | Technology | Notes |
 |-----------|-----------|-------|
 | OS | Raspberry Pi OS Lite (64-bit) | Headless, no desktop |
-| Audio playback | `mpv` or `vlc` | Stream radio URLs directly |
-| Audio routing | `PulseAudio` | Handles DAC + Bluetooth routing |
-| GPIO (encoder) | Python + `RPi.GPIO` or `gpiozero` | Reads encoder ticks |
-| Device API | Python + `websockets` | Receives commands from phone app |
-| AK2515 power | USB from Pi | Pi USB port → AK2515 USB-C |
-| AK2515 audio | 3.5mm Y-splitter | Feeds spectrum from audio signal |
+| Audio playback | `mpv` | Streams radio URLs; output via PulseAudio |
+| Audio routing | `PulseAudio` | Routes to BT sink (speaker) + local sink (AK2515) simultaneously via combined sink |
+| Bluetooth | `bluez` + `pulseaudio-module-bluetooth` | `bluetoothctl` for device management |
+| GPIO (encoder) | Python + `gpiozero` | Reads turns and button presses |
+| Device server | Python + `asyncio` + `websockets` | WebSocket API for phone app |
+| mDNS discovery | `avahi-daemon` | Phone app detects Pi on local network |
+| Battery management | PiJuice Python library | Read charge %, trigger safe shutdown |
+| AK2515 power | USB from Pi | Pi USB-A → AK2515 USB-C |
+| AK2515 audio | Pi 3.5mm headphone out | Onboard PWM audio is fine for display-only |
 
-**Python server (~100 lines):**
-- Reads rotary encoder → fires `next`/`prev` preset commands
-- Exposes WebSocket endpoint on local network
-- Receives station URL from app → passes to `mpv`
-- Updates LED state via GPIO
+**PulseAudio combined sink** allows simultaneous output to BT speaker (audio) and Pi's onboard 3.5mm (AK2515 spectrum). The AK2515 just needs the signal — quality doesn't matter for visual display.
 
-**Left of the Dial app (future addition):**
-- Local network discovery (mDNS/Bonjour via `avahi` on Pi)
-- When detected, "Cast to device" option appears in app
-- Tap station → sends stream URL to Pi WebSocket → Pi plays it
+---
+
+## Phone App Integration (Future)
+
+- Pi advertises itself via mDNS (`leftofthedial.local`)
+- Left of the Dial web app detects Pi on local network
+- "Cast to device" option appears when Pi is found
+- Tapping a station sends the stream URL to Pi via WebSocket
+- Pi confirms playback; app shows "Playing on device"
+
+---
+
+## Bluetooth Speaker Options
+
+| Speaker | Size | Price | Notes |
+|---------|------|-------|-------|
+| Marshall Willen | 4.5"×2.7" | $80 | Vintage aesthetic pairs naturally with walnut/aluminum box |
+| Tribit StormBox Micro 2 | 3"×3"×1.5" | $45 | Pocketable, good bass for size |
+| Sony SRS-XB13 | 4"×2.8" cylinder | $60 | IP67, warm sound |
+| B&O Beosound A1 | 4.7" puck | $250 | Premium; exceptional sound |
+
+Marshall Willen recommended for aesthetic coherence — vintage leather + brass sits naturally next to walnut + aluminum.
 
 ---
 
 ## Open Questions
 
-- [ ] Exact AK2515 board dimensions (measure before designing face cutout)
-- [ ] Speaker choice — powered bookshelf recommendation TBD
-- [ ] Whether to include a volume knob (potentiometer via MCP3008 ADC, or second encoder)
-- [ ] Case construction method: CNC, hand-cut, or hybrid
-- [ ] LED wiring: 5mm through-hole LED on face, GPIO-controlled via transistor
-- [ ] Pi Zero 2W vs Pi 3A+ (3A+ has full-size USB, easier for peripherals during dev)
+- [ ] AK2515 board exact dimensions (measure before designing face cutout)
+- [ ] Pi Zero 2W vs Pi 3A+ for development (3A+ has full-size USB, easier to work with initially)
+- [ ] Volume control — knob press-and-turn gesture, or second knob?
+- [ ] LED wiring: 5mm through-hole on face plate, GPIO-controlled via NPN transistor
+- [ ] Case construction: CNC aluminum face + hand-cut walnut, or full CNC
+- [ ] PiJuice Zero vs simpler LiPo + TP4056 + boost converter (~$15 DIY vs $45 turnkey)
 
 ---
 
@@ -129,7 +147,8 @@ iPhone (Left of the Dial app)
 
 - Web app: `tuner.redcontroldeck.com`
 - App repo: `github.com/mkudlacz/left-of-the-dial`
-- AK2515 product: Nobsound/Douk Audio, Amazon ASIN lookup "AK2515"
-- SendCutSend (aluminum face plate): sendcutsend.com
-- Elma knobs: elma.com (search "21 series" rotary knobs)
-- HiFiBerry DAC Zero: hifiberry.com/shop/boards/hifiberry-dac-zero
+- AK2515: Nobsound/Douk Audio — search "AK2515" on Amazon (~$50)
+- PiJuice Zero: uk.pi-supply.com/products/pijuice-zero
+- SendCutSend (aluminum face): sendcutsend.com
+- Elma knobs: elma.com — "21 series" rotary knobs
+- Marshall Willen: marshallheadphones.com
