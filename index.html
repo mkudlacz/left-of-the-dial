@@ -244,8 +244,10 @@
   }
   .station-card:active { background: rgba(255,255,255,0.06); }
   .station-card.active {
-    background: linear-gradient(120deg, rgba(201,162,39,0.09), rgba(201,162,39,0.02));
-    border-color: var(--amber-border);
+    background: linear-gradient(120deg, rgba(201,162,39,0.11), rgba(201,162,39,0.03));
+    border-color: var(--amber);
+    border-width: 1.5px;
+    box-shadow: 0 0 0 1px rgba(201,162,39,0.2), inset 0 0 16px rgba(201,162,39,0.07);
   }
   .card-top { display: flex; justify-content: space-between; align-items: flex-start; }
   .card-left { flex: 1; min-width: 0; }
@@ -450,7 +452,11 @@
     -webkit-user-select: none; user-select: none;
   }
   .preset-tile:active { opacity: 0.8; }
-  .preset-tile.active { border-color: var(--amber-border); }
+  .preset-tile.active {
+    border-color: var(--amber);
+    border-width: 1.5px;
+    box-shadow: 0 0 0 1px rgba(201,162,39,0.2), inset 0 0 20px rgba(201,162,39,0.07);
+  }
   .tile-map {
     width: 100%; height: 72px;
     background: #1e2a1e center/cover no-repeat;
@@ -1195,6 +1201,12 @@ function render() {
   });
 
   updateNowPlaying();
+  if (state.currentId) {
+    requestAnimationFrame(() => {
+      const active = document.querySelector('.station-card.active, .preset-tile.active');
+      active?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  }
 }
 
 
