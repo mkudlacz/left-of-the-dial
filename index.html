@@ -829,8 +829,8 @@ const DB = [
 const FILTERS = [
   { label:'All',        fn: () => true },
   { label:'Near Me',   fn: () => true, nearMe: true },
-  { label:'FM',         fn: s => { const f = parseFloat(s.freq); return !isNaN(f) && f < 200; },
-  { label:'AM',         fn: s => { const f = parseFloat(s.freq); return !isNaN(f) && f > 200; },
+  { label:'FM',         fn: s => { const f = parseFloat(s.freq); return !isNaN(f) && f < 200; } },
+  { label:'AM',         fn: s => { const f = parseFloat(s.freq); return !isNaN(f) && f > 200; } },
   { label:'College',    fn: s => s.tags.includes('college') },
   { label:'Public/NPR', fn: s => s.tags.includes('public') || s.tags.includes('npr') },
   { label:'Freeform',   fn: s => s.tags.includes('freeform') },
