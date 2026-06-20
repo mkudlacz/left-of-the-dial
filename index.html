@@ -1610,8 +1610,15 @@ function tune(station) {
   audio.load();
   render();
   setTimeout(() => {
-    document.querySelector('.preset-tile.active, .station-card.active')
-      ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const el = document.querySelector('.preset-tile.active, .station-card.active');
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const headerH = document.getElementById('header')?.offsetHeight || 0;
+    const npH = document.getElementById('now-playing')?.offsetHeight || 0;
+    const viewH = window.innerHeight - headerH - npH;
+    const elCenter = rect.top + rect.height / 2;
+    const targetCenter = headerH + viewH / 2;
+    window.scrollBy({ top: elCenter - targetCenter, behavior: 'smooth' });
   }, 120);
   startTuningBar();
   audio.play()
