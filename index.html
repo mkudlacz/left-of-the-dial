@@ -1615,9 +1615,10 @@ function tune(station) {
     const rect = el.getBoundingClientRect();
     const headerH = document.getElementById('header')?.offsetHeight || 0;
     const npH = document.getElementById('now-playing')?.offsetHeight || 0;
-    const viewH = window.innerHeight - headerH - npH;
+    const top = headerH, bottom = window.innerHeight - npH;
+    if (rect.top >= top && rect.bottom <= bottom) return; // already fully visible
     const elCenter = rect.top + rect.height / 2;
-    const targetCenter = headerH + viewH / 2;
+    const targetCenter = top + (bottom - top) / 2;
     window.scrollBy({ top: elCenter - targetCenter, behavior: 'smooth' });
   }, 120);
   startTuningBar();
