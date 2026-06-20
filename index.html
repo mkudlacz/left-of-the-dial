@@ -1062,11 +1062,6 @@ function renderTileGrid(stations, showMap = true) {
       loadTileMap('t_' + s.id, s.city, s.state, mapEl);
     }
   });
-  if (state.currentId) {
-    setTimeout(() => {
-      grid.querySelector('.preset-tile.active')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 80);
-  }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1206,12 +1201,6 @@ function render() {
   });
 
   updateNowPlaying();
-  if (state.currentId) {
-    setTimeout(() => {
-      const active = document.querySelector('.station-card.active, .preset-tile.active');
-      active?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 80);
-  }
 }
 
 
@@ -1620,6 +1609,10 @@ function tune(station) {
   audio.src = station.url;
   audio.load();
   render();
+  setTimeout(() => {
+    document.querySelector('.preset-tile.active, .station-card.active')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 120);
   startTuningBar();
   audio.play()
     .then(() => {
