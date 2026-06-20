@@ -53,6 +53,36 @@ Pi Zero 2W       ← compute
 PiSugar 3 Plus   ← back contact pogo pins (battery, no GPIO use)
 ```
 
+### GPIO Pin Map (verified from WhisPlay source)
+
+**Pins used by WhisPlay:**
+
+| Board Pin | BCM GPIO | Function |
+|-----------|----------|----------|
+| 3, 5 | GPIO2, GPIO3 | I²C — WM8960 audio control |
+| 7 | GPIO4 | LCD RST |
+| 11 | GPIO17 | Button |
+| 12, 35, 38, 40 | GPIO18, GPIO19, GPIO20, GPIO21 | I²S — WM8960 audio data |
+| 13 | GPIO27 | LCD DC |
+| 15 | GPIO22 | LCD backlight |
+| 16 | GPIO23 | RGB LED blue |
+| 18 | GPIO24 | RGB LED green |
+| 19, 21, 23, 24, 26 | SPI0 | LCD data |
+| 22 | GPIO25 | RGB LED red |
+
+**Free pins — confirmed available for rotary encoder:**
+
+| Board Pin | BCM GPIO | Assign to |
+|-----------|----------|-----------|
+| **29** | GPIO5 | Encoder CLK |
+| **31** | GPIO6 | Encoder DT |
+| **32** | GPIO12 | Encoder SW (button press) |
+| 33 | GPIO13 | Spare |
+| 36 | GPIO16 | Spare |
+| 37 | GPIO26 | Spare |
+
+Encoder wires to board pins 29, 31, 32 — no conflicts with WhisPlay whatsoever. Verified against `whisplay.py` source.
+
 ### Signal Chain
 
 ```
@@ -232,7 +262,7 @@ Mk.3 hardware in a fully custom CNC aluminum + walnut enclosure. Battery added.
 - [ ] PiSugar S Plus ($30) vs PiSugar 3 Plus ($50) — confirm both use same back-contact pogo pins and are compatible with WhisPlay stack
 - [ ] WhisPlay LCD driver — confirm `luma.lcd` or ST7789P3 Python library works on Pi Zero 2W
 - [ ] PulseAudio monitor source latency on Pi Zero 2W — FFT must stay <50ms for responsive spectrum
-- [ ] Knob encoder connects to which GPIO pins when WhisPlay occupies header — check WhisPlay pinout for passthrough
+- [x] Knob encoder GPIO confirmed free: board pins 29/31/32 (BCM 5/6/12) — no conflict with WhisPlay
 - [ ] Pi Zero 2W GPIO header needs soldering — use hammer header (Adafruit #3662) for no-solder install
 - [ ] Prototype before enclosure — verify stack physically fits and software works
 
