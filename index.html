@@ -345,7 +345,8 @@
     font-size: 14px; color: var(--amber); font-style: italic;
     line-height: 1.45; margin-bottom: 12px; letter-spacing: 0.2px;
   }
-  #npe-station-meta { margin-bottom: 14px; }
+  #npe-station-meta { margin-bottom: 14px; display: flex; justify-content: space-between; align-items: flex-start; }
+  #npe-station-meta-left { flex: 1; min-width: 0; }
   .npe-callsign {
     font-family: monospace; font-size: 18px; font-weight: 700;
     color: var(--amber); margin-right: 7px;
@@ -378,17 +379,14 @@
   .npe-rss-item { font-size: 12px; color: var(--text-dim); margin-bottom: 5px; line-height: 1.45; }
   .npe-rss-item a { color: var(--text-dim); text-decoration: none; }
   .npe-rss-item a:hover { color: var(--amber); }
-  #npe-donate {
-    margin-top: 14px; padding-top: 12px;
-    border-top: 1px solid rgba(255,255,255,0.05);
-  }
   #npe-donate a {
-    display: inline-flex; align-items: center; gap: 6px;
+    display: inline-block; flex-shrink: 0;
     background: var(--amber-dim); border: 1px solid var(--amber-border);
-    border-radius: 20px; padding: 7px 16px;
-    font-family: monospace; font-size: 11px; letter-spacing: 1px;
+    border-radius: 20px; padding: 4px 12px;
+    font-family: monospace; font-size: 10px; letter-spacing: 1px;
     text-transform: uppercase; color: var(--amber);
     text-decoration: none; transition: background 0.15s, border-color 0.15s;
+    margin-left: 10px; white-space: nowrap;
   }
   #npe-donate a:hover { background: rgba(201,162,39,0.22); border-color: var(--amber); }
   #npe-loading { color: var(--text-faint); font-size: 12px; font-family: monospace; padding: 8px 0; }
@@ -1356,10 +1354,13 @@ async function showExpandedPanel(station) {
   const format = getFormat(station);
   const listeners = state.listenerCount ? ` · ${state.listenerCount.toLocaleString()} listening` : '';
   inner += `<div id="npe-station-meta">`;
+  inner += `<div id="npe-station-meta-left">`;
   inner += `<span class="npe-callsign">${station.id.toUpperCase()}</span>`;
   inner += `<span class="npe-freq">${station.freq}</span>`;
   if (format) inner += `<span class="npe-tag">${format}</span>`;
   inner += `<div class="npe-detail">${station.org}${listeners}</div>`;
+  inner += `</div>`;
+  if (station.donate) inner += `<div id="npe-donate"><a href="${station.donate}" target="_blank" rel="noreferrer">Donate</a></div>`;
   inner += `</div>`;
 
   if (geo) {
@@ -1389,10 +1390,6 @@ async function showExpandedPanel(station) {
       inner += `<div class="npe-rss-item"><a href="${item.link}" target="_blank" rel="noreferrer">${title}</a></div>`;
     });
     inner += `</div>`;
-  }
-
-  if (station.donate) {
-    inner += `<div id="npe-donate"><a href="${station.donate}" target="_blank" rel="noreferrer">♥ Support ${station.id.toUpperCase()}</a></div>`;
   }
 
   panel.innerHTML = `<div id="npe-scroll"><div id="npe-close-wrap"><button id="npe-close" onclick="hideExpandedPanel()">✕</button></div><div id="npe-inner">${inner}</div></div>`;
