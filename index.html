@@ -1594,6 +1594,7 @@ function tune(station) {
     render();
     return;
   }
+  if (state.playing) stopMeta();
   state.currentId = station.id;
   state.tuning = true;
   state.playing = false;
@@ -1914,9 +1915,9 @@ function renderHistory() {
   try {
     const h = JSON.parse(localStorage.getItem('lotd-history') || '[]');
     const totalEl = document.getElementById('history-total');
-    if (totalEl) {
+    if (totalEl && h.length) {
       const total = h.reduce((s, e) => s + (e.dur || 0), 0);
-      totalEl.textContent = total > 5000 ? 'Total ' + fmtDuration(total) : '';
+      totalEl.textContent = total > 5000 ? fmtDuration(total) + ' total' : h.length + ' session' + (h.length !== 1 ? 's' : '');
     }
     if (!h.length) { el.innerHTML = '<p class="sheet-hint">No stations listened to yet.</p>'; return; }
     el.innerHTML = '';
