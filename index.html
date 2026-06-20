@@ -1524,7 +1524,8 @@ let metaTimer = null;
 let listenStart = null;
 
 function fmtDuration(ms) {
-  if (!ms || ms < 60000) return '';
+  if (!ms || ms < 5000) return '';
+  if (ms < 60000) return Math.round(ms / 1000) + 's';
   const m = Math.round(ms / 60000);
   return m < 60 ? m + 'm' : Math.floor(m / 60) + 'h ' + (m % 60) + 'm';
 }
@@ -1912,6 +1913,11 @@ function renderHistory() {
   if (!el) return;
   try {
     const h = JSON.parse(localStorage.getItem('lotd-history') || '[]');
+    const totalEl = document.getElementById('history-total');
+    if (totalEl) {
+      const total = h.reduce((s, e) => s + (e.dur || 0), 0);
+      totalEl.textContent = total > 5000 ? 'Total ' + fmtDuration(total) : '';
+    }
     if (!h.length) { el.innerHTML = '<p class="sheet-hint">No stations listened to yet.</p>'; return; }
     el.innerHTML = '';
     h.slice(0, 30).forEach(({id, ts, dur}) => {
@@ -2109,7 +2115,10 @@ render();
       <button id="restore-btn" class="sheet-action" onclick="importFavsFromSettings()">Restore Starred</button>
     </div>
     <div>
-      <div class="sheet-section-label">Listening History</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
+        <div class="sheet-section-label" style="margin-bottom:0">Listening History</div>
+        <div id="history-total" style="font-size:11px;color:var(--text-dim);font-family:monospace"></div>
+      </div>
       <div id="history-list"></div>
       <button class="sheet-action" id="clear-history-btn" onclick="clearHistory()" style="margin-top:8px">Clear History</button>
     </div>
