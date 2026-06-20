@@ -111,10 +111,10 @@
   }
   #search-input:focus { border-color: #8a6410; }
   #search-input::placeholder { color: #999; }
-  #wm-fm-label, #wm-am-label {
+  #wm-fm-label {
     fill: rgba(70,120,200,0.2); transition: fill 0.4s;
   }
-  #wm-fm-label.active, #wm-am-label.active { fill: #5b8ec8; }
+  #wm-fm-label.active { fill: #5b8ec8; }
   #tabs { display: flex; gap: 5px; margin-bottom: 8px; }
   .tab-btn {
     background: transparent; border: 1px solid transparent;
@@ -722,7 +722,7 @@ const DB = [
 { id:'kcou', name:'KCOU 88.1', freq:'88.1 FM', city:'Columbia', state:'MO', org:'University of Missouri', genre:'Alternative · Rock', tags:['college','rock','midwest'], url:'https://audio-edge-es6pf.mia.g.radiomast.io/3237c6cc-e87d-480d-a261-33a35f2c44c0', site:'kcou.fm' },
 /* { id:'kure', name:'KURE 88.5', freq:'88.5 FM', city:'Ames', state:'IA', org:'Iowa State University', genre:'Alternative · Eclectic', tags:['college','indie','midwest'], url:'https://kure.stuorg.iastate.edu:8000/kure.mp3', site:'kure.stuorg.iastate.edu' }, */
 { id:'krui', name:'KRUI 89.7', freq:'89.7 FM', city:'Iowa City', state:'IA', org:'University of Iowa', genre:'Freeform', tags:['college','freeform','midwest'], url:'http://krui.student-services.uiowa.edu:8000/listen', site:'krui.iowa.edu' },
-{ id:'kuom', name:'KUOM 770', freq:'770 AM', city:'Minneapolis', state:'MN', org:'University of Minnesota', genre:'Eclectic · Freeform', tags:['college','freeform','midwest'], url:'https://radiok.broadcasttool.stream/play_256', site:'radiok.org' },
+{ id:'kuom', name:'Radio K 100.7', freq:'100.7 FM', city:'Minneapolis', state:'MN', org:'University of Minnesota', genre:'Eclectic · Freeform', tags:['college','freeform','midwest'], url:'https://radiok.broadcasttool.stream/play_256', site:'radiok.org' },
 /* { id:'krlx', name:'KRLX 88.1', freq:'88.1 FM', city:'Northfield', state:'MN', org:'Carleton College', genre:'Eclectic', tags:['college','eclectic','midwest'], url:'https://krlx.carleton.edu:8000/stream.mp3', site:'krlx.carleton.edu' }, */
 { id:'wmcn', name:'WMCN 91.7', freq:'91.7 FM', city:'Saint Paul', state:'MN', org:'Macalester College', genre:'Freeform', tags:['college','freeform','midwest'], url:'https://audio-edge-vqwx4.yyz.g.radiomast.io/0786c562-432d-4d2b-a4b6-fda1a2f60cf7', site:'wmcn.macalester.edu' },
 { id:'mpr', name:'MPR News 91.1', freq:'91.1 FM', city:'Minneapolis', state:'MN', org:'Minnesota Public Radio', genre:'Public Radio · NPR · News', tags:['public','npr','news','midwest'], url:'https://nis.stream.publicradio.org/nis.mp3', site:'mprnews.org' },
@@ -829,8 +829,6 @@ const DB = [
 const FILTERS = [
   { label:'All',        fn: () => true },
   { label:'Near Me',   fn: () => true, nearMe: true },
-  { label:'FM',         fn: s => { const f = parseFloat(s.freq); return !isNaN(f) && f < 200; } },
-  { label:'AM',         fn: s => { const f = parseFloat(s.freq); return !isNaN(f) && f > 200; } },
   { label:'College',    fn: s => s.tags.includes('college') },
   { label:'Public/NPR', fn: s => s.tags.includes('public') || s.tags.includes('npr') },
   { label:'Freeform',   fn: s => s.tags.includes('freeform') },
@@ -853,8 +851,7 @@ const FILTERS = [
 ];
 const NEAR_ME_IDX = FILTERS.findIndex(f => f.nearMe);
 
-let tunerFMin = 88, tunerRange = 20, tunerAmMin = 700, tunerAmRange = 600;
-const TUNER_W_FM = 268, TUNER_AM_S = 272, TUNER_AM_E = 376;
+let tunerFMin = 88, tunerRange = 20;
 
 let state = {
   tab: 'presets',      // 'presets' | 'browse' | 'favs'
@@ -1677,10 +1674,7 @@ function stopTuningBar() {
 // ─────────────────────────────────────────────────────────────
 function updateNowPlaying() {
   document.getElementById('wm-led').classList.toggle('streaming', state.playing);
-  const _curSt = state.currentId ? DB.find(s => s.id === state.currentId) : null;
-  const _isAM  = state.playing && _curSt && parseFloat(_curSt.freq) > 200;
-  document.getElementById('wm-fm-label')?.classList.toggle('active', state.playing && !_isAM);
-  document.getElementById('wm-am-label')?.classList.toggle('active', !!_isAM);
+  document.getElementById('wm-fm-label')?.classList.toggle('active', state.playing);
   const needle = document.getElementById('wm-needle');
   if (needle) {
     let nx = 18; // default: left of dial
@@ -1688,12 +1682,8 @@ function updateNowPlaying() {
       const st = DB.find(s => s.id === state.currentId);
       if (st) {
         const freq = parseFloat(st.freq);
-        if (!isNaN(freq)) {
-          if (freq < 200)
-            nx = Math.round((freq - tunerFMin) / tunerRange * TUNER_W_FM);
-          else
-            nx = Math.round((freq - tunerAmMin) / tunerAmRange * (TUNER_AM_E - TUNER_AM_S)) + TUNER_AM_S;
-        }
+        if (!isNaN(freq))
+          nx = Math.round((freq - tunerFMin) / tunerRange * 390);
       }
     }
     needle.setAttribute('x1', nx);
@@ -2008,50 +1998,24 @@ window.addEventListener('scroll', () => {
 // ─────────────────────────────────────────────────────────────
 (function buildTunerSVG() {
   const W = 390;
+  const toX = f => Math.round((f - tunerFMin) / tunerRange * W);
 
-  // FM range (same logic: floor(min)-1 to ceil(max)+1)
   const fmFreqs = DB.map(s => parseFloat(s.freq)).filter(f => !isNaN(f) && f > 50 && f < 200);
   tunerFMin  = Math.floor(Math.min(...fmFreqs)) - 1;
   const fMax = Math.ceil(Math.max(...fmFreqs))  + 1;
   tunerRange = fMax - tunerFMin;
-  const toXFM = f => Math.round((f - tunerFMin) / tunerRange * TUNER_W_FM);
 
-  // AM range (same logic: floor(min)-50 to ceil(max)+50)
-  const amFreqs = DB.map(s => parseFloat(s.freq)).filter(f => !isNaN(f) && f > 200);
-  tunerAmMin    = Math.floor(Math.min(...amFreqs)) - 50;
-  const amMax   = Math.ceil(Math.max(...amFreqs))  + 50;
-  tunerAmRange  = amMax - tunerAmMin;
-  const toXAM = f => Math.round((f - tunerAmMin) / tunerAmRange * (TUNER_AM_E - TUNER_AM_S)) + TUNER_AM_S;
-
-  // FM ticks + labels
   let majorTicks = '', minorTicks = '', labels = '', stationDots = '';
   for (let f = Math.ceil(tunerFMin / 4) * 4; f <= fMax; f += 4) {
-    const x = toXFM(f);
+    const x = toX(f);
     majorTicks += `<line x1="${x}" y1="4" x2="${x}" y2="20"/>`;
     labels     += `<text x="${x}" y="27" text-anchor="middle">${f}</text>`;
   }
   for (let f = Math.ceil(tunerFMin / 2) * 2; f <= fMax; f += 2) {
-    if (f % 4 !== 0) minorTicks += `<line x1="${toXFM(f)}" y1="4" x2="${toXFM(f)}" y2="12"/>`;
+    if (f % 4 !== 0) minorTicks += `<line x1="${toX(f)}" y1="4" x2="${toX(f)}" y2="12"/>`;
   }
-
-  // AM ticks + labels (major every 100 kHz, label every 200 kHz)
-  for (let f = Math.ceil(tunerAmMin / 100) * 100; f <= amMax; f += 100) {
-    const x = toXAM(f);
-    majorTicks += `<line x1="${x}" y1="4" x2="${x}" y2="20"/>`;
-    if (f % 200 === 0) labels += `<text x="${x}" y="27" text-anchor="middle">${f}</text>`;
-  }
-  for (let f = Math.ceil(tunerAmMin / 50) * 50; f <= amMax; f += 50) {
-    if (f % 100 !== 0) minorTicks += `<line x1="${toXAM(f)}" y1="4" x2="${toXAM(f)}" y2="12"/>`;
-  }
-
-  // FM station dots
   DB.filter(s => { const f = parseFloat(s.freq); return !isNaN(f) && f > 50 && f < 200; }).forEach(s => {
-    const x = toXFM(parseFloat(s.freq));
-    stationDots += `<line class="wm-dot" data-sid="${s.id}" x1="${x}" y1="16" x2="${x}" y2="20" stroke="rgba(201,162,39,0.32)" stroke-width="1.5"/>`;
-  });
-  // AM station dots
-  DB.filter(s => { const f = parseFloat(s.freq); return !isNaN(f) && f > 200; }).forEach(s => {
-    const x = toXAM(parseFloat(s.freq));
+    const x = toX(parseFloat(s.freq));
     stationDots += `<line class="wm-dot" data-sid="${s.id}" x1="${x}" y1="16" x2="${x}" y2="20" stroke="rgba(201,162,39,0.32)" stroke-width="1.5"/>`;
   });
 
@@ -2070,10 +2034,8 @@ window.addEventListener('scroll', () => {
     <g stroke="rgba(255,255,255,0.6)"  stroke-width="1">${majorTicks}</g>
     <g stroke="rgba(255,255,255,0.3)"  stroke-width="0.7">${minorTicks}</g>
     <g font-family="monospace" font-size="6" fill="rgba(200,195,185,0.8)">${labels}</g>
-    <text x="${TUNER_AM_S - 1}" y="20" text-anchor="middle" font-family="monospace" font-size="9" font-style="italic" font-weight="bold" fill="rgba(255,255,255,0.5)">||</text>
     <g>${stationDots}</g>
-    <text id="wm-fm-label" x="${TUNER_W_FM - 4}" y="10" text-anchor="end" font-family="monospace" font-size="7" font-weight="bold" letter-spacing="0.5">FM</text>
-    <text id="wm-am-label" x="${W - 12}" y="10" text-anchor="end" font-family="monospace" font-size="7" font-weight="bold" letter-spacing="0.5">AM</text>
+    <text id="wm-fm-label" x="${W - 12}" y="10" text-anchor="end" font-family="monospace" font-size="7" font-weight="bold" letter-spacing="0.5">FM</text>
     <circle id="wm-led" cx="${W - 17}" cy="20" r="3.5"/>
     <line id="wm-needle" x1="18" y1="0" x2="18" y2="28" stroke="#c82020" stroke-width="1.2"/>
   `;
