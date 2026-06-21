@@ -763,7 +763,7 @@ const DB = [
 { id:'kunm', name:'KUNM 89.9', freq:'89.9 FM', city:'Albuquerque', state:'NM', org:'UNM', genre:'Public Radio · World', tags:['public','community','southwest'], url:'https://playerservices.streamtheworld.com/api/livestream-redirect/KUNMFM_128.mp3', site:'kunm.org', donate:'https://www.kunm.org/membership' },
 
 // ══ CALIFORNIA ══
-{ id:'kexp_la', name:'KCRW 89.9', freq:'89.9 FM', city:'Santa Monica', state:'CA', org:'Santa Monica College', genre:'Music · News · Public', tags:['public','indie','news','california','los angeles'], url:'http://streams.kcrw.com/kcrw_mp3', site:'kcrw.com', donate:'https://join.kcrw.com/' },
+{ id:'kcrw', name:'KCRW 89.9', freq:'89.9 FM', city:'Santa Monica', state:'CA', org:'Santa Monica College', genre:'Music · News · Public', tags:['public','indie','news','california','los angeles'], url:'http://streams.kcrw.com/kcrw_mp3', site:'kcrw.com', donate:'https://join.kcrw.com/' },
 { id:'kalx', name:'KALX 90.7', freq:'90.7 FM', city:'Berkeley', state:'CA', org:'UC Berkeley', genre:'Freeform · Eclectic', tags:['college','freeform','california','bay area'], url:'https://stream.kalx.berkeley.edu:8443/kalx-128.mp3', site:'kalx.berkeley.edu', donate:'https://kalx.berkeley.edu/donate' },
 { id:'kfjc', name:'KFJC 89.7', freq:'89.7 FM', city:'Los Altos Hills', state:'CA', org:'Foothill-De Anza CC', genre:'Freeform', tags:['college','freeform','california','bay area'], url:'http://netcast.kfjc.org/kfjc-320k-aac', site:'kfjc.org', donate:'https://donate.kfjc.org/' },
 { id:'kzsc', name:'KZSC 88.1', freq:'88.1 FM', city:'Santa Cruz', state:'CA', org:'UC Santa Cruz', genre:'Freeform · Eclectic', tags:['college','freeform','california','bay area'], url:'https://kzscfms1-geckohost.radioca.st/kzschigh', site:'kzsc.org', donate:'https://give.ucsc.edu/kzsc-year-round-fundraiser' },
@@ -1526,7 +1526,7 @@ const META_API = {
     if (!p || p.play_type === 'airbreak') return null;
     return [p.artist, p.song].filter(Boolean).join(' — ');
   },
-  kexp_la: async () => { // KCRW
+  kcrw: async () => { // KCRW
     const d = await fetch('https://tracklist-api.kcrw.com/Simulcast').then(r => r.json());
     return [d.artist, d.title].filter(Boolean).join(' — ');
   },
