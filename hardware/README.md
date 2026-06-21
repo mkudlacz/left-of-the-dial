@@ -179,67 +179,100 @@ Same as Mk.2A but uses **Pimoroni Pirate Audio Line-Out** instead of WhisPlay. A
 
 ## Mk.2C — Field Radio (Canonical Build)
 
-The one to build. A handheld transistor radio for the 21st century. Speaker for casual listening, 3.5mm jack for earphones, Bluetooth for wireless. Battery lasts all day. Big satisfying knob. Portrait orientation — holds like a radio, not a computer peripheral.
+The one to build. **No soldering required.** External speaker via PH2.0 JST, Bluetooth for AirPods and wireless speakers. Battery all day. Big knob. Landscape orientation like the CCrane — sits on a table, holds in a hand, sounds good either way.
 
-**Design reference:** CCrane Solar Observer. Compact, single-knob, speaker on front, headphone jack on side.
+**Design references:** CCrane Solar Observer (form factor, speaker-left layout) + iPod nano (knob as dominant UI element, screen as informational, restrained controls).
 
-**The mod:** The WM8960 chip on the WhisPlay has HPOUTL, HPOUTR, and GND pads exposing a proper headphone driver. Three solder points, three wires to a panel-mount 3.5mm jack. The chip handles simultaneous speaker + headphone output and supports jack detection for auto-mute.
+**No 3.5mm jack in v1.** Bluetooth covers AirPods and wireless earphones. 3.5mm can be added in a future revision with help.
+
+**AirPlay / HomeKit note:** AirPods pair directly via standard Bluetooth A2DP — works great. HomeKit audio is not supported (requires Apple MFi certification). AirPlay 2 sending is not available on Pi.
 
 ### Parts List
 
 | # | Component | Purpose | Est. Cost | Source |
 |---|-----------|---------|-----------|--------|
 | 1 | Raspberry Pi Zero 2W | Compute + WiFi + Bluetooth | $15 | raspberrypi.com |
-| 2 | PiSugar WhisPlay HAT | LCD + speaker + WM8960 codec + RGB LED + button | $36 | pisugar.com |
-| 3 | PiSugar 3 Plus 5000mAh | Battery + charging (back contact) | $50 | pisugar.com |
-| 4 | KY-040 rotary encoder | Station nav + BT device select | $5 | Amazon |
-| 5 | Machined aluminum knob 30–35mm | The soul of the device — big, satisfying | $10–15 | Rean/Neutrik or Amazon "6mm D-shaft aluminum knob" |
-| 6 | Panel-mount 3.5mm stereo jack | Headphone / line out | $2 | Amazon |
+| 2 | PiSugar WhisPlay HAT | 1.69" color LCD + WM8960 + RGB LED + button | $36 | pisugar.com |
+| 3 | PiSugar 3 Plus 5000mAh | Battery (back contact, no GPIO conflict) | $50 | pisugar.com |
+| 4 | 50mm full-range speaker driver 4–8Ω | External speaker via PH2.0 JST | $4–6 | Amazon "50mm speaker 4 ohm" |
+| 5 | KY-040 rotary encoder | Station nav + BT device select | $5 | Amazon |
+| 6 | Machined aluminum knob 30–35mm 6mm D-shaft | The dominant UI element | $10–15 | Amazon or Rean |
 | 7 | GPIO hammer header | No-solder GPIO install | $6 | Adafruit #3662 |
 | 8 | MicroSD card 32GB | Pi OS + software | $8 | Amazon |
 | 9 | USB-C wall adapter 5V 3A | Charging | $8 | Amazon |
-| 10 | Misc (standoffs, wire, solder, screws) | Assembly | $12 | Amazon |
-| | **Total (no enclosure)** | | **~$152–157** | |
+| 10 | Short PH2.0 JST cable | WhisPlay → speaker driver | $2 | Amazon |
+| 11 | Female-to-female jumper wires | Encoder → GPIO | $6 | Amazon |
+| 12 | MicroSD USB reader | Writing Pi OS image | $8 | Amazon |
+| 13 | Misc (standoffs, wire, screws) | Assembly | $10 | Amazon |
+| | **Total (no enclosure)** | | **~$168–173** | |
 
-### Stack
+### Stack (top to bottom, zero soldering)
 
 ```
-WhisPlay HAT     ← GPIO (LCD, speaker, WM8960, LED, button)
-                    └── 3 wires soldered to WM8960 HPOUTL/HPOUTR/GND
-                         └── panel-mount 3.5mm jack (enclosure wall)
-Pi Zero 2W       ← compute
-PiSugar 3 Plus   ← back contact pogo pins (battery, zero GPIO conflict)
+WhisPlay HAT      ← GPIO header
+  └── PH2.0 JST ──────────────→ 50mm speaker driver (mounted in enclosure)
+Pi Zero 2W        ← compute
+PiSugar 3 Plus    ← back contact pogo pins (battery)
+  └── USB-C ─────────────────→ charging port (enclosure wall)
+
+Encoder CLK/DT/SW → jumper wires → board pins 29/31/32
 ```
 
 ### Audio Routing
 
-| Output | Signal path | Use case |
-|--------|------------|---------|
-| Onboard speaker | WM8960 amp → WhisPlay speaker | Deck, kitchen, casual |
-| 3.5mm jack | WM8960 headphone driver → panel jack | Earphones, wired speakers |
-| Bluetooth | Pi A2DP source → BT earphones/speaker | Wireless, commute |
+| Output | How | Use case |
+|--------|-----|---------|
+| Enclosure speaker | PH2.0 JST → 50mm driver | Table, deck, kitchen |
+| AirPods | Bluetooth A2DP | Wireless earphones |
+| BT speaker | Bluetooth A2DP | Marshall Willen, Tribit, etc. |
 
-All three active simultaneously. WM8960 jack detection can auto-mute speaker when earphones inserted (configure via `amixer`).
+### Enclosure — Landscape Field Radio
 
-### The Soldering Mod
+**References:** CCrane Solar Observer (speaker-left landscape) + iPod mini (knob proportionally dominant, compact refined body)
+**Orientation:** Landscape — sits on a table, comfortable handheld
 
-Three pads on the WM8960 QFN package:
-- **HPOUTL** → 3.5mm jack tip (left)
-- **HPOUTR** → 3.5mm jack ring (right)
-- **GND** → 3.5mm jack sleeve
+```
+  ┌────────────────────────────────────────────┐  ~130mm wide
+  │                                            │  ~ 75mm tall
+  │  ┌──────────────┐  ┌─────────┐            │
+  │  │              │  │  WKCR   │   ╭─────╮  │
+  │  │  ░ ░ ░ ░ ░   │  │  89.9   │   │     │  │
+  │  │  ░ ░ ░ ░ ░   │  │  ▁▃▇▃▁  │   │  ◎  │  │ ← 35mm knob
+  │  │  ░ ░ ░ ░ ░   │  └─────────┘   │     │  │
+  │  └──────────────┘      · btn      ╰─────╯  │
+  │   50mm speaker    LCD landscape             │
+  └────────────────────────────────────────────┘
+  walnut                                  walnut
+  end-cap                                 end-cap
 
-Wire gauge: 28–30 AWG. Keep leads short. Standard fine-tip iron. A steady hand or an uncle.
+  BOTTOM: USB-C (centered, hidden when on table)
+  BACK: plain
+```
 
-### Enclosure Concept
+**Dimensions:**
+- **Width:** 130mm (~5.1") — between CCrane and iPod mini proportionally
+- **Height:** 75mm (~3")
+- **Depth:** 40mm (stack ~23mm + speaker driver + clearance)
 
-Portrait orientation — taller than wide. Think handheld transistor radio:
-- **Front:** WhisPlay LCD (top), speaker grille (below LCD)
-- **Right side:** big aluminum knob (encoder), WhisPlay button below it
-- **Left side:** 3.5mm headphone jack, USB-C charging port
-- **Top:** nothing
-- **Bottom:** nothing
+**Face zones (left → right):**
+- 8mm margin
+- 50mm speaker grille (circular punched holes, 50mm driver behind)
+- 12mm gap
+- 45mm LCD window (WhisPlay, landscape-rotated)
+- 10mm gap
+- 35mm knob (proportionally dominant — the iPod mini move)
+- 8mm margin, button small + flush below knob
 
-Hammond makes portrait extrusions. The 1455C802 (~100×80×25mm) or similar — measure the WhisPlay + PiSugar stack height (~30mm) and pick the narrowest Hammond that fits. Walnut end-caps on top and bottom. Laser-cut or hand-cut speaker grille cutout on front face.
+**Enclosure candidate:** Hammond 1455L1301 (~130×76mm) or measure stack and pick closest.
+Walnut end-caps left and right. Cutouts in aluminum face: speaker grille, LCD window, knob hole.
+
+### Display Rotation
+
+WhisPlay LCD is 240×280 portrait by default. In landscape enclosure, set `USE_HORIZONTAL = 0` or `2` in `whisplay.py` to rotate 90°. Display becomes 280×240 — slightly wider than tall, perfect for spectrum bars.
+
+```python
+USE_HORIZONTAL = 0  # landscape — change from default 1
+```
 
 ### GPIO Assignments (confirmed free from WhisPlay source)
 
