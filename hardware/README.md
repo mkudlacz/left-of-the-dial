@@ -6,21 +6,24 @@ A dedicated streaming radio device to complement the web app at `tuner.redcontro
 
 ## Build Comparison
 
-| Attribute | **Mk.1 — Desktop** | **Mk.2A — Portable** ← committed | **Mk.2B — Portable+** | Mk.3 — Desktop+ | Mk.4 — Statement |
-|-----------|-------------------|---------------------------------|----------------------|-----------------|------------------|
-| **Status** | Defined | **Committed** | Option | Defined | Defined |
-| **Est. Cost** | ~$135 | ~$150 | ~$160 | ~$175 | ~$260 |
-| **Display/Audio HAT** | AK2515 VFD | WhisPlay HAT | Pirate Audio Line-Out | AK2515 VFD | AK2515 VFD |
-| **Display** | VFD 25×15 hardware spectrum | 1.69" 240×280 color LCD | 1.3" 240×240 color IPS | VFD 25×15 | VFD 25×15 |
-| **Spectrum** | Hardware (AK2515) | Software (FFT → color LCD) | Software (FFT → IPS) | Hardware | Hardware |
-| **Audio out** | Bluetooth | Bluetooth + onboard speaker | Bluetooth + 3.5mm line | Bluetooth + RCA | Bluetooth + RCA |
-| **Speaker** | None (BT only) | Built-in (small) | Separate (add-on) | None | None |
-| **Buttons** | Knob only | Knob + 1 button | Knob + 4 tactile | Knob only | Knob only |
-| **Battery** | None | PiSugar 3 Plus 5000mAh | PiSugar 3 Plus 5000mAh | None | PiJuice + LiPo |
-| **Power** | Wall | Battery + USB-C charge | Battery + USB-C charge | Wall | Battery + Wall |
-| **Enclosure complexity** | Low (Hammond + walnut) | Low (display + knob + 1 btn) | Medium (4 btn cutouts) | Low | High (CNC) |
-| **Footprint** | ~220×80×30mm | ~80×65×35mm | ~80×65×35mm | ~220×80×30mm | ~200×70×35mm |
-| **Best for** | Desk/shelf | Bedside, kitchen, travel | Richer feature set | Receiver pairing | Statement object |
+| Attribute | **Mk.1 — Desktop** | **Mk.2A — Portable** | **Mk.2B — Portable+** | **Mk.2C — Field Radio** ← canonical | Mk.3 — Desktop+ | Mk.4 — Statement |
+|-----------|-------------------|--------------------|----------------------|-------------------------------------|-----------------|------------------|
+| **Status** | Defined | Defined | Option | **Build this one** | Defined | Defined |
+| **Est. Cost** | ~$135 | ~$150 | ~$160 | ~$175 | ~$175 | ~$260 |
+| **Display/Audio HAT** | AK2515 VFD | WhisPlay HAT | Pirate Audio Line-Out | WhisPlay HAT + soldered 3.5mm | AK2515 VFD | AK2515 VFD |
+| **Display** | VFD 25×15 | 1.69" 240×280 color | 1.3" 240×240 IPS | 1.69" 240×280 color | VFD 25×15 | VFD 25×15 |
+| **Spectrum** | Hardware | Software FFT | Software FFT | Software FFT | Hardware | Hardware |
+| **Audio out** | Bluetooth | BT + speaker | BT + 3.5mm | **BT + speaker + 3.5mm** | BT + RCA | BT + RCA |
+| **Speaker** | None | Built-in (small) | Separate | **Built-in + panel 3.5mm jack** | None | None |
+| **3.5mm jack** | None | None | Yes (line) | **Yes (headphone/line — soldered mod)** | RCA | RCA |
+| **Buttons** | Knob only | Knob + 1 btn | Knob + 4 tactile | Knob + 1 btn | Knob only | Knob only |
+| **Knob** | Davies plastic | Davies plastic | Davies plastic | **Big machined aluminum (30–35mm)** | Machined | Machined |
+| **Battery** | None | PiSugar 3 Plus | PiSugar 3 Plus | **PiSugar 3 Plus 5000mAh** | None | PiJuice + LiPo |
+| **Power** | Wall | Battery + USB-C | Battery + USB-C | Battery + USB-C | Wall | Battery + Wall |
+| **Enclosure shape** | Landscape | Portrait/puck | Portrait | **Portrait — transistor radio form** | Landscape | Landscape |
+| **Footprint** | ~220×80×30mm | ~80×65×35mm | ~80×65×35mm | ~90×65×40mm | ~220×80×30mm | ~200×70×35mm |
+| **Soldering required** | No | No | No | **Yes — 3 pads on WM8960** | No | No |
+| **Best for** | Desk/shelf | Bedside, kitchen | Richer audio chain | **Deck, travel, work, earphones** | Receiver pairing | Statement object |
 
 ---
 
@@ -174,7 +177,100 @@ Same as Mk.2A but uses **Pimoroni Pirate Audio Line-Out** instead of WhisPlay. A
 
 ---
 
-## Mk.1 — Desktop
+## Mk.2C — Field Radio (Canonical Build)
+
+The one to build. A handheld transistor radio for the 21st century. Speaker for casual listening, 3.5mm jack for earphones, Bluetooth for wireless. Battery lasts all day. Big satisfying knob. Portrait orientation — holds like a radio, not a computer peripheral.
+
+**Design reference:** CCrane Solar Observer. Compact, single-knob, speaker on front, headphone jack on side.
+
+**The mod:** The WM8960 chip on the WhisPlay has HPOUTL, HPOUTR, and GND pads exposing a proper headphone driver. Three solder points, three wires to a panel-mount 3.5mm jack. The chip handles simultaneous speaker + headphone output and supports jack detection for auto-mute.
+
+### Parts List
+
+| # | Component | Purpose | Est. Cost | Source |
+|---|-----------|---------|-----------|--------|
+| 1 | Raspberry Pi Zero 2W | Compute + WiFi + Bluetooth | $15 | raspberrypi.com |
+| 2 | PiSugar WhisPlay HAT | LCD + speaker + WM8960 codec + RGB LED + button | $36 | pisugar.com |
+| 3 | PiSugar 3 Plus 5000mAh | Battery + charging (back contact) | $50 | pisugar.com |
+| 4 | KY-040 rotary encoder | Station nav + BT device select | $5 | Amazon |
+| 5 | Machined aluminum knob 30–35mm | The soul of the device — big, satisfying | $10–15 | Rean/Neutrik or Amazon "6mm D-shaft aluminum knob" |
+| 6 | Panel-mount 3.5mm stereo jack | Headphone / line out | $2 | Amazon |
+| 7 | GPIO hammer header | No-solder GPIO install | $6 | Adafruit #3662 |
+| 8 | MicroSD card 32GB | Pi OS + software | $8 | Amazon |
+| 9 | USB-C wall adapter 5V 3A | Charging | $8 | Amazon |
+| 10 | Misc (standoffs, wire, solder, screws) | Assembly | $12 | Amazon |
+| | **Total (no enclosure)** | | **~$152–157** | |
+
+### Stack
+
+```
+WhisPlay HAT     ← GPIO (LCD, speaker, WM8960, LED, button)
+                    └── 3 wires soldered to WM8960 HPOUTL/HPOUTR/GND
+                         └── panel-mount 3.5mm jack (enclosure wall)
+Pi Zero 2W       ← compute
+PiSugar 3 Plus   ← back contact pogo pins (battery, zero GPIO conflict)
+```
+
+### Audio Routing
+
+| Output | Signal path | Use case |
+|--------|------------|---------|
+| Onboard speaker | WM8960 amp → WhisPlay speaker | Deck, kitchen, casual |
+| 3.5mm jack | WM8960 headphone driver → panel jack | Earphones, wired speakers |
+| Bluetooth | Pi A2DP source → BT earphones/speaker | Wireless, commute |
+
+All three active simultaneously. WM8960 jack detection can auto-mute speaker when earphones inserted (configure via `amixer`).
+
+### The Soldering Mod
+
+Three pads on the WM8960 QFN package:
+- **HPOUTL** → 3.5mm jack tip (left)
+- **HPOUTR** → 3.5mm jack ring (right)
+- **GND** → 3.5mm jack sleeve
+
+Wire gauge: 28–30 AWG. Keep leads short. Standard fine-tip iron. A steady hand or an uncle.
+
+### Enclosure Concept
+
+Portrait orientation — taller than wide. Think handheld transistor radio:
+- **Front:** WhisPlay LCD (top), speaker grille (below LCD)
+- **Right side:** big aluminum knob (encoder), WhisPlay button below it
+- **Left side:** 3.5mm headphone jack, USB-C charging port
+- **Top:** nothing
+- **Bottom:** nothing
+
+Hammond makes portrait extrusions. The 1455C802 (~100×80×25mm) or similar — measure the WhisPlay + PiSugar stack height (~30mm) and pick the narrowest Hammond that fits. Walnut end-caps on top and bottom. Laser-cut or hand-cut speaker grille cutout on front face.
+
+### GPIO Assignments (confirmed free from WhisPlay source)
+
+| Board Pin | BCM | Function |
+|-----------|-----|----------|
+| 29 | GPIO5 | Encoder CLK |
+| 31 | GPIO6 | Encoder DT |
+| 32 | GPIO12 | Encoder SW |
+| 33, 36, 37 | GPIO13/16/26 | Spare |
+
+### Knob Interaction
+
+```
+PLAY
+  Turn → next / previous preset
+  Short press → play / pause
+  Long press → BT DEVICE MODE
+
+BT DEVICE MODE
+  LCD: paired device name
+  Turn → scroll devices
+  Short press → connect → PLAY
+  Long press → cancel
+
+IDLE
+  LCD: clock + last station
+```
+
+---
+
+## Mk.2A — Portable (Simpler Option)
 
 Desk/shelf unit. AK2515 VFD handles spectrum in hardware. Wall powered. BT audio to nearby speaker.
 
@@ -258,23 +354,25 @@ Mk.3 hardware in a fully custom CNC aluminum + walnut enclosure. Battery added.
 
 ## Open Questions
 
-**Mk.2A (active):**
-- [ ] PiSugar S Plus ($30) vs PiSugar 3 Plus ($50) — confirm both use same back-contact pogo pins and are compatible with WhisPlay stack
-- [ ] WhisPlay LCD driver — confirm `luma.lcd` or ST7789P3 Python library works on Pi Zero 2W
-- [ ] PulseAudio monitor source latency on Pi Zero 2W — FFT must stay <50ms for responsive spectrum
-- [x] Knob encoder GPIO confirmed free: board pins 29/31/32 (BCM 5/6/12) — no conflict with WhisPlay
-- [ ] Pi Zero 2W GPIO header needs soldering — use hammer header (Adafruit #3662) for no-solder install
-- [ ] Prototype before enclosure — verify stack physically fits and software works
+**Mk.2C (canonical — active):**
+- [x] Encoder GPIO confirmed free: board pins 29/31/32 (BCM 5/6/12) — verified against whisplay.py source
+- [ ] Locate WM8960 HPOUTL/HPOUTR/GND pads on WhisPlay PCB — confirm accessible before ordering
+- [ ] PiSugar 3 Plus vs S Plus — confirm back-contact pogo pin compatibility with WhisPlay stack
+- [ ] WhisPlay LCD driver — whisplay.py (PiSugar GitHub) is the library; confirm runs on Pi OS Lite Zero 2W
+- [ ] PulseAudio FFT latency — must stay <50ms on Zero 2W for responsive spectrum display
+- [ ] Hammond enclosure — measure full stack height before ordering (Pi ~5mm + WhisPlay ~10mm + PiSugar ~8mm + tolerance)
+- [ ] WM8960 jack-detect auto-mute — configure via amixer; test earphone insert/remove behavior
+- [ ] Always prototype before cutting enclosure
 
 **Mk.1 (backlog):**
-- [ ] PCM5102 I2S DAC board — confirm Pi Zero 2W GPIO passthrough available when stacking
+- [ ] PCM5102 I2S DAC board GPIO passthrough when stacking
 - [ ] AK2515 exact board dimensions for face cutout
 
 ---
 
-## Mk.2A Shopping List (no enclosure)
+## Mk.2C Shopping List (canonical build, no enclosure)
 
-Ready to order. Buy Pi + WhisPlay + PiSugar from their respective makers; everything else from Amazon.
+Buy Pi + WhisPlay + PiSugar from their respective makers in one pass. Everything else Amazon.
 
 | Item | Where | ~Price |
 |------|-------|--------|
@@ -282,14 +380,15 @@ Ready to order. Buy Pi + WhisPlay + PiSugar from their respective makers; everyt
 | PiSugar WhisPlay HAT | pisugar.com | $36 |
 | PiSugar 3 Plus 5000mAh | pisugar.com (same order) | $50 |
 | KY-040 rotary encoder | Amazon | $5 |
-| Davies Molding 1434 knob (prototype) | mouser.com | $6 |
+| Machined aluminum knob 30–35mm 6mm D-shaft | Amazon "6mm D shaft aluminum knob large" or Rean | $10–15 |
+| Panel-mount 3.5mm stereo jack | Amazon "3.5mm panel mount stereo jack" | $2 |
+| GPIO hammer header | Adafruit #3662 | $6 |
 | MicroSD 32GB (Samsung Endurance) | Amazon | $8 |
 | USB-C wall adapter 5V 3A | Amazon | $8 |
-| GPIO hammer header | Adafruit #3662 | $6 |
 | Female-to-female jumper wires | Amazon | $6 |
 | MicroSD USB reader | Amazon | $8 |
-| Misc (resistors, standoffs, wire) | Amazon | $10 |
-| **Total** | | **~$158** |
+| Misc (standoffs, 28AWG wire, solder, screws) | Amazon | $12 |
+| **Total** | | **~$166–171** |
 
 ---
 
